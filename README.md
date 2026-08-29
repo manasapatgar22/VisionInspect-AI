@@ -2,85 +2,25 @@
 
 **AI-Powered Manufacturing Defect Detection and Quality Inspection System**
 
-VisionInspect-AI is a computer-vision-based quality inspection system designed to automatically analyze manufacturing product images, detect anomalies, classify defects, estimate defect severity, and provide a final **PASS/FAIL** quality decision.
+VisionInspect-AI analyzes manufacturing product images, detects anomalies,
+classifies defect types, localizes defects, scores severity, and produces a
+final PASS/FAIL/REVIEW quality decision — with JWT-authenticated,
+role-restricted access and persistent inspection records.
 
 ## 🚀 Features
 
+* 🔐 JWT authentication with role-based access (`quality_engineer` / `factory_supervisor`)
 * 📷 Product image upload
-* 🔍 AI-based anomaly detection
-* 🏷️ Defect classification
-* 📍 Defect localization with bounding box
-* 📊 Severity assessment
-* ✅ PASS/FAIL quality decision
-* 📋 Inspection history
-* 📈 Inspection analytics
+* 🔍 AI-based anomaly detection (ResNet18 feature-distance model)
+* 🏷️ Multi-class defect classification (prototype-based)
+* 📍 Defect localization with bounding box overlay
+* 📊 Weighted severity scoring — `(Size × 30%) + (Location × 25%) + (Type × 25%) + (Confidence × 20%)`
+* ✅ Automated PASS / FAIL / REVIEW decision
+* 💾 Inspection results persisted to the database
+* 📈 Basic inspection statistics dashboard
+* ⚛️ React + Vite frontend, dashboard-style UI with severity color coding
 * 🌐 FastAPI backend
-* ⚛️ React frontend
-* 🧪 MVTec Anomaly Detection dataset support
-
-## 🧠 AI Performance
-
-### Anomaly Detection
-
-| Metric    |      Score |
-| --------- | ---------: |
-| Accuracy  | **81.93%** |
-| Precision | **98.00%** |
-| Recall    | **77.78%** |
-| F1 Score  | **86.73%** |
-
-### Defect Classification
-
-| Metric          |      Score |
-| --------------- | ---------: |
-| Accuracy        | **84.34%** |
-| Macro Precision | **87.50%** |
-| Macro Recall    | **84.39%** |
-| Macro F1        | **84.58%** |
-
-## 🏭 Supported Bottle Defects
-
-The current implementation uses the MVTec bottle dataset and supports:
-
-* `good`
-* `broken_large`
-* `broken_small`
-* `contamination`
-
-## 🏗️ System Architecture
-
-```text
-                   VisionInspect-AI
-                         │
-                  React Frontend
-                         │
-                   Image Upload
-                         │
-                         ▼
-                  FastAPI Backend
-                         │
-              ┌──────────┴──────────┐
-              ▼                     ▼
-      Image Processing       AI Inspection
-                                    │
-                     ┌──────────────┼──────────────┐
-                     ▼              ▼              ▼
-                Anomaly       Classification   Localization
-                Detection           │              │
-                     └──────────────┼──────────────┘
-                                    ▼
-                              Severity Analysis
-                                    │
-                                    ▼
-                              Quality Decision
-                                    │
-                              ┌─────┴─────┐
-                              ▼           ▼
-                            PASS        FAIL
-                                   
-                                   
-                         Analytics & History
-```
+* 🧪 Built against the MVTec AD dataset (bottle category)
 
 ## 📁 Project Structure
 
@@ -89,235 +29,195 @@ VisionInspect-AI/
 │
 ├── backend/
 │   ├── app/
+│   │   ├── main.py                  # FastAPI app entrypoint
+│   │   ├── database.py              # SQLAlchemy Base / session / get_db
+│   │   ├── models/
+│   │   │   ├── user.py              # User table (auth)
+│   │   │   └── inspection.py        # InspectionRecord table (persisted results)
 │   │   ├── routes/
-│   │   │   ├── inspection.py
-│   │   │   ├── analytics.py
-│   │   │   └── auth.py
-│   │   │
-│   │   ├── services/
-│   │   │   ├── anomaly_detection.py
-│   │   │   ├── classification.py
-│   │   │   ├── defect_classifier.py
-│   │   │   ├── defect_detection.py
-│   │   │   ├── image_processing.py
-│   │   │   ├── inspection_history.py
-│   │   │   └── severity.py
-│   │   │
-│   │   └── main.py
-│   │
-│   ├── evaluate_model.py
-│   ├── evaluate_classifier.py
-│   ├── evaluate_classifier_metrics.py
+│   │   │   ├── auth.py              # register, login, get_current_user
+│   │   │   ├── inspection.py        # /inspect — the full AI pipeline
+│   │   │   └── analytics.py         # /statistics (used by the dashboard)
+│   │   └── services/
+│   │       ├── anomaly_detection.py # MVTecAnomalyDetector (ResNet18 feature distance)
+│   │       ├── defect_classifier.py # DefectClassifier (prototype-based)
+│   │       ├── defect_detection.py  # localize_defect (bounding box)
+│   │       ├── image_processing.py  # preprocess_image
+│   │       ├── severity.py          # calculate_severity
+│   │       ├── quality_control.py   # make_quality_decision
+│   │       ├── inspection_report.py # create_inspection_report
+│   │       └── inspection_history.py# add_inspection (in-memory recent list)
+│   ├── dataset/
+│   │   └── mvtec/bottle/
+│   │       ├── train/good/          # reference images for the anomaly baseline
+│   │       └── test/                # good / broken_large / broken_small / contamination
+│   ├── evaluate_model.py            # standalone anomaly detector evaluation script
+│   ├── test_anomaly.py              # standalone anomaly detector test script
 │   └── requirements.txt
 │
 ├── frontend/
 │   ├── src/
-│   │   ├── App.jsx
-│   │   ├── main.jsx
-│   │   └── style.css
-│   ├── package.json
-│   ├── vite.config.js
-│   └── Dockerfile
+│   │   ├── App.jsx                  # login gate + dashboard + upload + results
+│   │   ├── main.jsx                 # React entrypoint
+│   │   └── style.css                # dashboard/industrial theme
+│   ├── vite.config.js               # proxies /api/* to the backend
+│   └── package.json
 │
-├── dataset/
-│   └── mvtec/
-│
-├── docker-compose.yml
-└── README.md
+└── .gitignore
 ```
 
 ## ⚙️ Requirements
 
-* Python 3.12+
-* Node.js
-* npm
-* Git
-* OpenCV
-* NumPy
-* Pillow
-* FastAPI
-* Uvicorn
-* React
-* Vite
+* Python 3.11+
+* Node.js + npm
+* FastAPI, Uvicorn
+* SQLAlchemy
+* python-jose, passlib, `bcrypt==4.0.1` (see note below)
+* PyTorch, torchvision
+* OpenCV, NumPy, Pillow
+* React, Vite
 
 ## 🔧 Backend Setup
 
-From the project root:
-
 ```bash
+cd backend
 python -m venv venv
-```
 
-Activate the environment:
-
-### Linux / Codespaces
-
-```bash
+# Windows
+venv\Scripts\activate
+# macOS/Linux
 source venv/bin/activate
+
+pip install -r requirements.txt
 ```
 
-Install dependencies:
+> **Known issue:** `bcrypt` 4.1+ breaks `passlib`'s password hashing —
+> registration will fail with `AttributeError: module 'bcrypt' has no
+> attribute '__about__'` or `password cannot be longer than 72 bytes`.
+> Fix:
+> ```bash
+> pip install "bcrypt==4.0.1"
+> ```
 
-```bash
-pip install -r backend/requirements.txt
-```
-
-Start the backend:
-
-```bash
-uvicorn backend.app.main:app --host 0.0.0.0 --port 5000 --reload
-```
-
-Backend API:
+Add the reference dataset before starting the server — the anomaly detector
+needs it to build its "normal" baseline:
 
 ```text
-http://localhost:5000
+backend/dataset/mvtec/bottle/train/good/*.png
+backend/dataset/mvtec/bottle/test/{good,broken_large,broken_small,contamination}/*.png
 ```
 
-Swagger documentation:
-
-```text
-http://localhost:5000/docs
+Download the "bottle" category from the
+[MVTec AD dataset](https://www.mvtec.com/company/research/datasets/mvtec-ad)
+and place it at that exact path. If the path doesn't match, startup logs:
 ```
+Model initialization failed: No images found in dataset\mvtec\bottle\train\good
+```
+and `/api/inspection/inspect` returns `500: Inspection models are not ready.`
+
+Start the backend (from inside `backend/`):
+
+```bash
+python -m uvicorn app.main:app --reload
+```
+
+- API: `http://127.0.0.1:8000`
+- Swagger docs: `http://127.0.0.1:8000/docs`
 
 ## 💻 Frontend Setup
 
-Open another terminal:
-
 ```bash
 cd frontend
-```
-
-Install dependencies:
-
-```bash
 npm install
-```
-
-Start the frontend:
-
-```bash
 npm run dev
 ```
 
-The frontend normally runs on:
+- Frontend: `http://localhost:5173`
 
-```text
-http://localhost:5173
-```
+Vite proxies `/api/*` calls to the backend. **Check `vite.config.js`'s proxy
+target matches the port the backend is actually running on** (`8000` per the
+command above) — a mismatch here is the most common cause of
+`ECONNREFUSED` proxy errors, along with simply not having the backend
+running yet.
+
+## 🔐 Authentication
+
+`/api/inspection/inspect` requires a valid JWT and one of two roles.
+
+1. Register via Swagger (`POST /api/auth/register`):
+   ```json
+   {
+     "username": "demo",
+     "email": "demo@test.com",
+     "password": "demo1234",
+     "role": "quality_engineer"
+   }
+   ```
+   Valid roles: `quality_engineer`, `factory_supervisor`. Any other role is
+   rejected by the inspection endpoint with `403`.
+2. Log in through the frontend — it shows a login screen automatically
+   whenever there's no stored token.
+3. The JWT is stored in `localStorage` (`vi_token`) and sent as
+   `Authorization: Bearer <token>` on every inspection request.
+4. A `401` response (expired/invalid token) automatically logs the user out
+   and prompts them to sign in again.
 
 ## 📡 API Endpoints
 
-### Inspection
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| POST | `/api/auth/register` | No | Create a user account |
+| POST | `/api/auth/login` | No | Get a JWT access token |
+| POST | `/api/inspection/inspect` | Yes (role-restricted) | Upload an image, run the full AI pipeline, persist the result |
+| GET | `/api/analytics/statistics` | — | Stats shown on the dashboard (total/passed/failed/critical) |
 
-```text
-POST /api/inspection/inspect
-```
+## 🧠 How Inspection Works
 
-Upload a product image and receive:
+1. **Anomaly detection** — a pretrained ResNet18 extracts features from the
+   uploaded image and compares them against the "good" reference set; the
+   distance is the anomaly score.
+2. **Classification** — the same feature space is compared against
+   per-class prototypes built from the test set to predict a specific
+   defect type (`good`, `broken_large`, `broken_small`, `contamination`).
+3. **Localization** — the uploaded image is diffed against a reference
+   image to produce a bounding box around the likely defect region, drawn
+   as an overlay in the frontend.
+4. **Severity** — the weighted formula above maps to Critical (80-100) /
+   High (60-79) / Medium (40-59) / Low (0-39), each shown with a distinct
+   color in the UI.
+5. **Quality decision** — anomaly score + severity together produce
+   PASS / FAIL / REVIEW, which is displayed and saved to the database.
 
-* Anomaly score
-* Defect type
-* Confidence
-* Severity
-* Quality decision
-* Defect localization
+## ✅ Status
 
-### Inspection History
+**Done and verified working:**
+- Auth, role-based access control
+- Dataset-backed anomaly detection, classification, localization
+- Severity scoring, quality decision
+- Inspection results persisted to the database (`InspectionRecord`)
+- Dashboard-style frontend with severity color coding
 
-```text
-GET /api/analytics/history
-```
+**Known gaps / next steps:**
+- `InspectionRecord` rows are written on every inspection, but no endpoint
+  currently reads them back — `GET /api/analytics/statistics` and any
+  `/history` view still rely on the in-memory `inspection_history` list,
+  which resets on server restart. Wiring a DB-backed history endpoint is
+  the next real improvement.
+- `evaluate_model.py` / `test_anomaly.py` exist but haven't been run for a
+  documented precision/recall/F1 report — worth doing before citing
+  specific accuracy numbers anywhere.
+- No formal UI wireframes were produced — the working UI was built
+  directly instead.
+- Docker/cloud deployment not yet attempted (planned for later per the
+  original project's week-by-week schedule).
 
-Returns previously completed inspections.
+## 🐛 Troubleshooting Log
 
-### Statistics
+Issues actually hit and fixed while building this:
 
-```text
-GET /api/analytics/statistics
-```
-
-Returns:
-
-* Total inspections
-* Passed inspections
-* Failed inspections
-* Critical inspections
-* Most common defect
-* Defect counts
-
-## 🧪 Dataset
-
-The project uses the **MVTec Anomaly Detection** dataset.
-
-Current development focuses on:
-
-```text
-dataset/mvtec/bottle/
-├── train/
-│   └── good/
-│
-└── test/
-    ├── good/
-    ├── broken_large/
-    ├── broken_small/
-    └── contamination/
-```
-
-## 🔬 Example Inspection
-
-For a `broken_large` bottle image, the system can produce:
-
-```text
-Defect Type:       broken_large
-Confidence:        100%
-Anomaly Score:     10.6524
-Severity:          Critical
-Severity Score:    83.48 / 100
-Decision:          FAIL
-```
-
-Recommended action:
-
-```text
-Reject Product and Trigger Quality Inspection Workflow
-```
-
-## 🛠️ Current Development Status
-
-```text
-MVTec Dataset                  ✅
-Image Processing               ✅
-Anomaly Detection              ✅
-Anomaly Evaluation             ✅
-Defect Classification          ✅
-Classification Evaluation      ✅
-Severity Assessment            ✅
-PASS/FAIL Decision             ✅
-Defect Localization            ✅
-Bounding Box Visualization     ✅
-FastAPI Backend                ✅
-React Frontend                 ✅
-Image Upload                   ✅
-Inspection History             ✅
-Analytics API                  ✅
-Dashboard Statistics           ✅
-```
-
-## 🔮 Future Improvements
-
-* Persistent database using SQLite/PostgreSQL
-* User authentication
-* More MVTec product categories
-* Improved defect segmentation
-* Advanced heatmap visualization
-* Production deployment
-* Real-time inspection monitoring
-* Advanced analytics and charts
-* Export inspection reports
-* Docker-based deployment
-
-## 👩‍💻 Project
-
-**VisionInspect-AI**
-AI-powered manufacturing defect detection and quality inspection system.
+| Symptom | Cause | Fix |
+|---|---|---|
+| `backend/app/models/` missing after cloning | `.gitignore` had a bare `models/` line meant for PyTorch checkpoints, which also matched the SQLAlchemy models folder | Changed to `*.pth` / `*.pt` / `*.onnx` only |
+| `password cannot be longer than 72 bytes` on register | `bcrypt` 4.1+ incompatible with installed `passlib` | `pip install "bcrypt==4.0.1"` |
+| `Model initialization failed: No images found in dataset\mvtec\bottle\train\good` | Dataset folder empty or wrong path | Place MVTec images at `backend/dataset/mvtec/bottle/train/good/` |
+| Frontend `ECONNREFUSED` on every `/api/*` call | Backend not running, or `vite.config.js` proxy target pointed at the wrong port | Start backend first; confirm proxy target matches `8000` |

@@ -131,100 +131,105 @@ function App() {
     }
   };
 
-    if (!token) {
+  // Maps a severity level string to a CSS class suffix, for badge/progress coloring.
+  const severityClass = (level) => {
+    if (!level) return "unknown";
+    return level.toString().toLowerCase();
+  };
+
+  if (!token) {
     return (
-      <div className="app">
-        <header className="header">
-          <div>
-            <h1>VisionInspect AI</h1>
-            <p>Sign in to run an inspection</p>
+      <div className="auth-shell">
+        <div className="auth-card">
+          <div className="auth-brand">
+            <span className="brand-mark">VI</span>
+            <div>
+              <h1>VisionInspect AI</h1>
+              <p>Manufacturing Quality Inspection</p>
+            </div>
           </div>
-        </header>
-        <form onSubmit={handleLogin} style={{ maxWidth: 320, margin: "40px auto" }}>
-          <div style={{ marginBottom: 12 }}>
+
+          <form onSubmit={handleLogin} className="auth-form">
+            <label className="field-label">Username</label>
             <input
               type="text"
-              placeholder="Username"
+              placeholder="Enter username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              style={{ width: "100%", padding: 8 }}
               required
             />
-          </div>
-          <div style={{ marginBottom: 12 }}>
+
+            <label className="field-label">Password</label>
             <input
               type="password"
-              placeholder="Password"
+              placeholder="Enter password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              style={{ width: "100%", padding: 8 }}
               required
             />
-          </div>
-          {authError && <p style={{ color: "red" }}>{authError}</p>}
-          <button type="submit" disabled={authLoading} style={{ width: "100%", padding: 8 }}>
-            {authLoading ? "Signing in..." : "Sign in"}
-          </button>
-          <p style={{ fontSize: 12, marginTop: 8, color: "#666" }}>
-            No account? Register via POST /api/auth/register (Swagger docs) first.
-          </p>
-        </form>
+
+            {authError && <div className="auth-error">{authError}</div>}
+
+            <button type="submit" disabled={authLoading} className="auth-submit">
+              {authLoading ? "Signing in..." : "Sign in"}
+            </button>
+
+            <p className="auth-hint">
+              No account? Register via <code>POST /api/auth/register</code> in the Swagger docs first.
+            </p>
+          </form>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="app">
-      <button onClick={handleLogout} style={{ float: "right", margin: 8 }}>
-        Log out
-      </button>
-      <section className="dashboard-stats">
+      <header className="topbar">
+        <div className="brand">
+          <span className="brand-mark">VI</span>
+          <div>
+            <h1>VisionInspect AI</h1>
+            <p>AI-powered manufacturing quality inspection</p>
+          </div>
+        </div>
 
-        <div className="stat-card">
+        <div className="topbar-right">
+          <div className="status">
+            <span className="status-dot"></span>
+            System Online
+          </div>
+          <button onClick={handleLogout} className="logout-button">
+            Log out
+          </button>
+        </div>
+      </header>
+
+      <section className="stats-grid">
+
+        <div className="stat-card stat-total">
           <span>Total Inspections</span>
-          <strong>
-            {statistics.total_inspections}
-          </strong>
+          <strong>{statistics.total_inspections}</strong>
         </div>
 
-        <div className="stat-card">
+        <div className="stat-card stat-passed">
           <span>Passed</span>
-          <strong>
-            {statistics.passed}
-          </strong>
+          <strong>{statistics.passed}</strong>
         </div>
 
-        <div className="stat-card">
+        <div className="stat-card stat-failed">
           <span>Failed</span>
-          <strong>
-            {statistics.failed}
-          </strong>
+          <strong>{statistics.failed}</strong>
         </div>
 
-        <div className="stat-card">
+        <div className="stat-card stat-critical">
           <span>Critical</span>
-          <strong>
-            {statistics.critical}
-          </strong>
+          <strong>{statistics.critical}</strong>
         </div>
 
       </section>
 
-      <header className="header">
-        <div>
-          <h1>VisionInspect AI</h1>
-          <p>
-            AI-powered manufacturing quality inspection
-          </p>
-        </div>
-
-        <div className="status">
-          <span className="status-dot"></span>
-          System Online
-        </div>
-      </header>
-
-      <main className="container">
+      <main className="content-grid">
 
         <section className="upload-card">
 
@@ -320,7 +325,7 @@ function App() {
 
         </section>
 
-        {result && (
+        {result ? (
           <section className="results">
 
             <div className="result-header">
@@ -370,7 +375,7 @@ function App() {
 
               <div className="metric">
                 <span>Severity</span>
-                <strong>
+                <strong className={`severity-badge severity-${severityClass(result.severity.severity_level)}`}>
                   {result.severity.severity_level}
                 </strong>
               </div>
@@ -389,7 +394,7 @@ function App() {
 
               <div className="progress">
                 <div
-                  className="progress-bar"
+                  className={`progress-bar progress-${severityClass(result.severity.severity_level)}`}
                   style={{
                     width: `${Math.min(
                       result.severity.severity_score,
@@ -413,6 +418,14 @@ function App() {
 
             </div>
 
+          </section>
+        ) : (
+          <section className="results results-empty">
+            <div className="empty-state">
+              <div className="empty-icon">⬡</div>
+              <h2>Awaiting Inspection</h2>
+              <p>Upload a product image and run an inspection to see results here.</p>
+            </div>
           </section>
         )}
 
