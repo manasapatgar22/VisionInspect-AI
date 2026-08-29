@@ -1,0 +1,15 @@
+fastapi
+uvicorn
+python-multipart
+flask
+flask-cors
+torch
+torchvision
+Pillow
+numpy
+opencv-python-headless
+python-dotenv
+SQLAlchemy
+python-jose[cryptography]
+passlib[bcrypt]
+bcrypt==4.0.1

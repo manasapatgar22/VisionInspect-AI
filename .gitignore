@@ -1,0 +1,16 @@
+
+# Python
+venv/
+__pycache__/
+*.pyc
+
+# Dataset
+dataset/
+
+# Trained model weight files (not the app/models/ source directory)
+*.pth
+*.pt
+*.onnx
+
+# Environment
+.env
