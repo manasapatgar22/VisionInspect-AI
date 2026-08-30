@@ -13,6 +13,10 @@ function App() {
     critical: 0
   });
 
+  // --- Category state ---
+  const [categories, setCategories] = useState(["bottle"]);
+  const [category, setCategory] = useState("bottle");
+
   // --- Auth state ---
   const [token, setToken] = useState(
     () => localStorage.getItem("vi_token") || ""
@@ -53,6 +57,7 @@ function App() {
     localStorage.removeItem("vi_token");
     setToken("");
   };
+
   useEffect(() => {
     fetch("/api/analytics/statistics")
       .then((response) => response.json())
@@ -65,6 +70,27 @@ function App() {
           error
         );
       });
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/inspection/categories")
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.categories && data.categories.length > 0) {
+          setCategories(data.categories);
+
+          if (!data.categories.includes(category)) {
+            setCategory(data.categories[0]);
+          }
+        }
+      })
+      .catch((error) => {
+        console.error(
+          "Unable to load categories:",
+          error
+        );
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleFileChange = (event) => {
@@ -97,8 +123,9 @@ function App() {
       const formData = new FormData();
 
       formData.append("file", file);
+      formData.append("category", category);
 
-            const response = await fetch(
+      const response = await fetch(
         "/api/inspection/inspect",
         {
           method: "POST",
@@ -135,6 +162,13 @@ function App() {
   const severityClass = (level) => {
     if (!level) return "unknown";
     return level.toString().toLowerCase();
+  };
+
+  const formatCategoryLabel = (name) => {
+    return name
+      .split("_")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
   };
 
   if (!token) {
@@ -240,6 +274,22 @@ function App() {
             defects and assess quality.
           </p>
 
+          <label className="field-label">Product Category</label>
+          <select
+            className="category-select"
+            value={category}
+            onChange={(e) => {
+              setCategory(e.target.value);
+              setResult(null);
+            }}
+          >
+            {categories.map((name) => (
+              <option key={name} value={name}>
+                {formatCategoryLabel(name)}
+              </option>
+            ))}
+          </select>
+
           <label className="upload-area">
 
             <input
@@ -335,6 +385,7 @@ function App() {
 
                 <p>
                   {result.inspection.filename}
+                  {result.category && ` • ${formatCategoryLabel(result.category)}`}
                 </p>
               </div>
 

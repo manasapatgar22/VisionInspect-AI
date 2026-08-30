@@ -3,7 +3,7 @@ import shutil
 import tempfile
 
 import cv2
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 
 from app.models.user import User
 from app.routes.auth import get_current_user
@@ -29,42 +29,104 @@ router = APIRouter(
     tags=["Inspection"]
 )
 
+DATASET_ROOT = Path("dataset/mvtec")
 
 # ---------------------------------------------------------
-# AI MODELS
+# PER-CATEGORY MODEL CACHE
+#
+# Models are built lazily on first request for a category,
+# not all at startup — loading all 15 MVTec categories up
+# front would be slow and waste memory on categories you
+# never use. Once built, a category's models stay cached
+# for the life of the server process.
 # ---------------------------------------------------------
 
-detector = MVTecAnomalyDetector(
-    max_reference_images=209
-)
+_detectors = {}
+_classifiers = {}
+_model_errors = {}
 
-REFERENCE_DIRECTORY = Path(
-    "dataset/mvtec/bottle/train/good"
-)
 
-try:
-    detector.build_reference(
-        REFERENCE_DIRECTORY
-    )
+def get_available_categories():
+    """Lists MVTec category folders actually present on disk."""
 
-    classifier = DefectClassifier(
-        detector
-    )
+    if not DATASET_ROOT.exists():
+        return []
 
-    classifier.build_prototypes(
-        "dataset/mvtec/bottle/test",
-        max_images_per_class=20
-    )
+    return sorted([
+        p.name for p in DATASET_ROOT.iterdir()
+        if p.is_dir()
+    ])
 
-    models_ready = True
 
-except Exception as error:
-    print(
-        f"Model initialization failed: {error}"
-    )
+def get_models_for_category(category: str):
+    """
+    Lazily builds (and caches) the anomaly detector and
+    classifier for one MVTec category. A category that
+    previously failed to load is remembered, so repeated
+    bad requests fail fast instead of retrying disk/model
+    work every time.
+    """
 
-    classifier = None
-    models_ready = False
+    if category in _model_errors:
+        raise _model_errors[category]
+
+    if category in _detectors:
+        return _detectors[category], _classifiers[category]
+
+    reference_directory = DATASET_ROOT / category / "train" / "good"
+    test_directory = DATASET_ROOT / category / "test"
+
+    try:
+        detector = MVTecAnomalyDetector(
+            max_reference_images=200
+        )
+
+        detector.build_reference(
+            reference_directory
+        )
+
+        classifier = DefectClassifier(
+            detector
+        )
+
+        classifier.build_prototypes(
+            str(test_directory),
+            max_images_per_class=20
+        )
+
+        _detectors[category] = detector
+        _classifiers[category] = classifier
+
+        return detector, classifier
+
+    except Exception as error:
+
+        wrapped = RuntimeError(
+            f"Models for category '{category}' are not ready: {error}"
+        )
+
+        _model_errors[category] = wrapped
+
+        raise wrapped
+
+
+# ---------------------------------------------------------
+# CATEGORY LISTING ENDPOINT
+# ---------------------------------------------------------
+
+@router.get("/categories")
+def list_categories():
+    """
+    Returns whichever MVTec category folders exist under
+    dataset/mvtec/ right now. Used by the frontend to
+    populate the category dropdown dynamically — add a new
+    category by downloading it into that folder, no code
+    change required.
+    """
+
+    return {
+        "categories": get_available_categories()
+    }
 
 
 # ---------------------------------------------------------
@@ -74,13 +136,15 @@ except Exception as error:
 @router.post("/inspect")
 async def inspect_image(
     file: UploadFile = File(...),
+    category: str = Form("bottle"),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
-    Upload an image and generate a complete
-    VisionInspect inspection report.
+    Upload an image and generate a complete VisionInspect
+    inspection report for the given product category.
     """
+
     if current_user.role not in ("quality_engineer", "factory_supervisor"):
         raise HTTPException(
             status_code=403,
@@ -104,11 +168,28 @@ async def inspect_image(
             detail="Unsupported image format."
         )
 
-    if not models_ready:
+    available_categories = get_available_categories()
+
+    if category not in available_categories:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"Unknown category '{category}'. "
+                f"Available categories: {available_categories}"
+            )
+        )
+
+    try:
+        detector, classifier = get_models_for_category(
+            category
+        )
+    except Exception as error:
         raise HTTPException(
             status_code=500,
-            detail="Inspection models are not ready."
+            detail=str(error)
         )
+
+    reference_directory = DATASET_ROOT / category / "train" / "good"
 
     image_path = None
 
@@ -170,13 +251,13 @@ async def inspect_image(
         classification = classifier.predict(
             image
         )
-        
+
         # -------------------------------------------------
         # Defect localization
         # -------------------------------------------------
 
         reference_paths = list(
-            REFERENCE_DIRECTORY.glob("*.png")
+            reference_directory.glob("*.png")
         )
 
         if reference_paths:
@@ -206,9 +287,6 @@ async def inspect_image(
                 "defect_area_percent": 0.0
             }
 
-
-
-
         defect_type = classification[
             "defect_type"
         ]
@@ -219,19 +297,44 @@ async def inspect_image(
 
         # -------------------------------------------------
         # Determine defect type severity
+        #
+        # Defect type names differ per MVTec category — a
+        # "cable" has bent_wire / cut_outer_insulation /
+        # missing_wire, a "capsule" has crack / poke /
+        # squeeze, etc. Rather than hardcode every category's
+        # defect names, "good" is always low severity and any
+        # other predicted type gets a moderate-high default,
+        # unless a category has a specific mapping below.
+        # Add entries to PER_CATEGORY_SEVERITY as you tune
+        # specific categories.
         # -------------------------------------------------
 
-        defect_severity_map = {
-            "good": 5,
-            "broken_small": 60,
-            "broken_large": 90,
-            "contamination": 75
+        PER_CATEGORY_SEVERITY = {
+            "bottle": {
+                "good": 5,
+                "broken_small": 60,
+                "broken_large": 90,
+                "contamination": 75
+            }
+            # Add other categories here, e.g.:
+            # "capsule": {"good": 5, "crack": 70, "poke": 65, "scratch": 55, "squeeze": 80},
         }
 
-        defect_type_score = defect_severity_map.get(
-            defect_type,
-            50
+        category_severity_map = PER_CATEGORY_SEVERITY.get(
+            category,
+            {}
         )
+
+        if defect_type == "good":
+            defect_type_score = category_severity_map.get(
+                "good",
+                5
+            )
+        else:
+            defect_type_score = category_severity_map.get(
+                defect_type,
+                70
+            )
 
         # -------------------------------------------------
         # Estimate anomaly/location contribution
@@ -285,7 +388,6 @@ async def inspect_image(
         # Final inspection report
         # -------------------------------------------------
 
-        # Add localization information
         localization_result = {
             "detected": localization["detected"],
             "bounding_box": localization["bounding_box"],
@@ -309,7 +411,10 @@ async def inspect_image(
             quality=quality
         )
         report["localization"] = localization_result
+        report["category"] = category
+
         add_inspection(report)
+
         db.add(
             InspectionRecord(
                 filename=file.filename,
@@ -323,6 +428,7 @@ async def inspect_image(
             )
         )
         db.commit()
+
         report["processing"] = {
             "image_shape": list(
                 processed_image.shape

@@ -635,3 +635,25 @@ footer {
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+/* ---------------------------------------------------------
+   CATEGORY SELECT
+--------------------------------------------------------- */
+
+.category-select {
+  width: 100%;
+  margin-top: 6px;
+  padding: 11px 13px;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  font-size: 14px;
+  background: #f8fafc;
+  color: var(--ink);
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.category-select:focus {
+  outline: none;
+  border-color: var(--accent);
+}

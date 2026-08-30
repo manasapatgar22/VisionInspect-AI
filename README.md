@@ -90,6 +90,9 @@ source venv/bin/activate
 
 pip install -r requirements.txt
 ```
+Create the environment:python -m venv venv
+Use code with caution.Activate it: .\venv\Scripts\Activate.ps1
+
 
 > **Known issue:** `bcrypt` 4.1+ breaks `passlib`'s password hashing —
 > registration will fail with `AttributeError: module 'bcrypt' has no
