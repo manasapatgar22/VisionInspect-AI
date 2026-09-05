@@ -15,5 +15,8 @@ dataset/
 # Environment
 .env
 
-# Node.js dependencies
-node_modules/
+# Frontend dependencies
+frontend/node_modules/
+
+# Frontend build output
+frontend/dist/
