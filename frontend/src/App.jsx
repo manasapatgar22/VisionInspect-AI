@@ -1,4 +1,8 @@
 import { useEffect, useState } from "react";
+import {
+  LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
+} from "recharts";
 
 function App() {
   const [file, setFile] = useState(null);
@@ -12,6 +16,9 @@ function App() {
     failed: 0,
     critical: 0
   });
+  const [trend, setTrend] = useState([]);
+  const [defectDistribution, setDefectDistribution] = useState([]);
+  const [severityDistribution, setSeverityDistribution] = useState([]);
 
   // --- Category state ---
   const [categories, setCategories] = useState(["bottle"]);
@@ -79,6 +86,23 @@ function App() {
           error
         );
       });
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/analytics/trend")
+      .then((response) => response.json())
+      .then((data) => setTrend(data.trend || []))
+      .catch((error) => console.error("Unable to load trend:", error));
+
+    fetch("/api/analytics/defect-distribution")
+      .then((response) => response.json())
+      .then((data) => setDefectDistribution(data.distribution || []))
+      .catch((error) => console.error("Unable to load defect distribution:", error));
+
+    fetch("/api/analytics/severity-distribution")
+      .then((response) => response.json())
+      .then((data) => setSeverityDistribution(data.distribution || []))
+      .catch((error) => console.error("Unable to load severity distribution:", error));
   }, []);
 
   useEffect(() => {
@@ -182,6 +206,13 @@ function App() {
       .split("_")
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join(" ");
+  };
+  const SEVERITY_COLORS = {
+    Critical: "#dc2626",
+    High: "#ea580c",
+    Medium: "#eab308",
+    Low: "#16a34a",
+    unknown: "#94a3b8"
   };
 
   if (!token) {
@@ -523,34 +554,83 @@ function App() {
 
             </section>
           )}
-          
+
 
         </main>
       ) : (
         <main className="content-grid supervisor-view">
 
-          
-          <section className="results results-empty">
+          <section className="analytics-card">
+            <h2>Inspection Trend</h2>
+            <p className="description">Daily pass / fail / review counts.</p>
 
-            <div className="empty-state">
-
-              <div className="empty-icon">
-                ⬡
-              </div>
-
-              <h2>
-                Factory Supervisor Dashboard
-              </h2>
-
-              <p>
-                You have view-only access to inspection statistics.
-                Running new inspections requires a Quality Engineer account.
-              </p>
-
-            </div>
-
+            <ResponsiveContainer width="100%" height={280}>
+              <LineChart data={trend}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" />
+                <YAxis allowDecimals={false} />
+                <Tooltip />
+                <Legend />
+                <Line type="monotone" dataKey="PASS" stroke="#16a34a" strokeWidth={2} />
+                <Line type="monotone" dataKey="FAIL" stroke="#dc2626" strokeWidth={2} />
+                <Line type="monotone" dataKey="REVIEW" stroke="#eab308" strokeWidth={2} />
+              </LineChart>
+            </ResponsiveContainer>
           </section>
 
+          <section className="analytics-card">
+            <h2>Defect Type Distribution</h2>
+            <p className="description">Count of inspections by predicted defect type.</p>
+
+            <ResponsiveContainer width="100%" height={280}>
+              <BarChart data={defectDistribution}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="defect_type" />
+                <YAxis allowDecimals={false} />
+                <Tooltip />
+                <Bar dataKey="count" fill="#2563eb" />
+              </BarChart>
+            </ResponsiveContainer>
+          </section>
+
+          <section className="analytics-card">
+            <h2>Severity Distribution</h2>
+            <p className="description">Share of inspections by severity level.</p>
+
+            <ResponsiveContainer width="100%" height={280}>
+              <PieChart>
+                <Pie
+                  data={severityDistribution}
+                  dataKey="count"
+                  nameKey="severity_level"
+                  outerRadius={100}
+                  label
+                >
+                  {severityDistribution.map((entry, index) => (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={SEVERITY_COLORS[entry.severity_level] || SEVERITY_COLORS.unknown}
+                    />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </section>
+          <section className="analytics-card export-card">
+            <h2>Production Quality Report</h2>
+            <p className="description">Download the current inspection data.</p>
+
+            <div className="export-buttons">
+              <a href="/api/analytics/export/csv" className="export-button">
+                Download CSV
+              </a>
+              <a href="/api/analytics/export/pdf" className="export-button">
+                Download PDF
+              </a>
+            </div>
+          </section>
         </main>
       )}
 
