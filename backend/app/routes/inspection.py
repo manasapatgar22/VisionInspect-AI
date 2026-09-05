@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.inspection import InspectionRecord
 
+from app.services.image_quality import analyze_image_quality
 from app.services.image_processing import preprocess_image
 from app.services.anomaly_detection import MVTecAnomalyDetector
 from app.services.defect_classifier import DefectClassifier
@@ -145,10 +146,10 @@ async def inspect_image(
     inspection report for the given product category.
     """
 
-    if current_user.role not in ("quality_engineer", "factory_supervisor"):
+    if current_user.role != "quality_engineer":
         raise HTTPException(
             status_code=403,
-            detail="Only quality engineers or factory supervisors can run inspections."
+            detail="Only quality engineers can run inspections."
         )
 
     allowed_extensions = {
@@ -223,6 +224,13 @@ async def inspect_image(
             raise ValueError(
                 "Unable to read uploaded image."
             )
+
+
+        # -------------------------------------------------
+        # Image quality analysis
+        # -------------------------------------------------
+
+        quality_report = analyze_image_quality(image)
 
         # -------------------------------------------------
         # Preprocess image
@@ -412,12 +420,14 @@ async def inspect_image(
         )
         report["localization"] = localization_result
         report["category"] = category
+        report["image_quality"] = quality_report
 
         add_inspection(report)
 
         db.add(
             InspectionRecord(
                 filename=file.filename,
+                category=category,
                 defect_type=defect_type,
                 confidence=confidence,
                 anomaly_score=round(anomaly_score, 4),

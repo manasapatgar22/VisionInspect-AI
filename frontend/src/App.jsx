@@ -21,6 +21,9 @@ function App() {
   const [token, setToken] = useState(
     () => localStorage.getItem("vi_token") || ""
   );
+  const [role, setRole] = useState(
+    () => localStorage.getItem("vi_role") || ""
+  );
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState("");
@@ -45,7 +48,10 @@ function App() {
       }
 
       localStorage.setItem("vi_token", data.access_token);
+      localStorage.setItem("vi_role", data.user.role);
+
       setToken(data.access_token);
+      setRole(data.user.role);
     } catch (err) {
       setAuthError(err.message);
     } finally {
@@ -55,7 +61,10 @@ function App() {
 
   const handleLogout = () => {
     localStorage.removeItem("vi_token");
+    localStorage.removeItem("vi_role");
+
     setToken("");
+    setRole("");
   };
 
   useEffect(() => {
@@ -110,6 +119,10 @@ function App() {
   };
 
   const inspectImage = async () => {
+    if (role !== "quality_engineer") {
+      setError("Only quality engineers can run inspections.");
+      return;
+    }
     if (!file) {
       setError("Please select an image first.");
       return;
@@ -263,224 +276,284 @@ function App() {
 
       </section>
 
-      <main className="content-grid">
+      {role === "quality_engineer" ? (
 
-        <section className="upload-card">
+        <main className="content-grid">
 
-          <h2>Product Inspection</h2>
+          <section className="upload-card">
 
-          <p className="description">
-            Upload a product image to detect manufacturing
-            defects and assess quality.
-          </p>
+            <h2>Product Inspection</h2>
 
-          <label className="field-label">Product Category</label>
-          <select
-            className="category-select"
-            value={category}
-            onChange={(e) => {
-              setCategory(e.target.value);
-              setResult(null);
-            }}
-          >
-            {categories.map((name) => (
-              <option key={name} value={name}>
-                {formatCategoryLabel(name)}
-              </option>
-            ))}
-          </select>
+            <p className="description">
+              Upload a product image to detect manufacturing
+              defects and assess quality.
+            </p>
 
-          <label className="upload-area">
+            <label className="field-label">Product Category</label>
 
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleFileChange}
-            />
+            <select
+              className="category-select"
+              value={category}
+              onChange={(e) => {
+                setCategory(e.target.value);
+                setResult(null);
+              }}
+            >
+              {categories.map((name) => (
+                <option key={name} value={name}>
+                  {formatCategoryLabel(name)}
+                </option>
+              ))}
+            </select>
 
-            <div className="upload-content">
-              <div className="upload-icon">
-                ↑
-              </div>
+            <label className="upload-area">
 
-              <strong>
-                Choose product image
-              </strong>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+              />
 
-              <span>
-                PNG, JPG or JPEG
-              </span>
-            </div>
+              <div className="upload-content">
 
-          </label>
-
-          {preview && (
-            <div className="preview-section">
-
-              <div className="image-container">
-
-                <img
-                  src={preview}
-                  alt="Selected product"
-                  className="inspection-image"
-                />
-
-                {result?.localization?.detected &&
-                  result.localization.bounding_box && (
-                    <div
-                      className="defect-box"
-                      style={{
-                        left: `${result.localization.bounding_box.x / 256 * 100}%`,
-                        top: `${result.localization.bounding_box.y / 256 * 100}%`,
-                        width: `${result.localization.bounding_box.width / 256 * 100}%`,
-                        height: `${result.localization.bounding_box.height / 256 * 100}%`
-                      }}
-                    >
-                      <span>Defect</span>
-                    </div>
-                  )}
-
-              </div>
-
-              <div className="preview-info">
-
-                <strong>{file?.name}</strong>
-
-                <p>
-                  {result
-                    ? "Inspection completed"
-                    : "Ready for inspection"}
-                </p>
-
-              </div>
-
-            </div>
-          )}
-
-          <button
-            className="inspect-button"
-            onClick={inspectImage}
-            disabled={!file || loading}
-          >
-            {loading
-              ? "Analyzing..."
-              : "Run AI Inspection"}
-          </button>
-
-          {error && (
-            <div className="error">
-              {error}
-            </div>
-          )}
-
-        </section>
-
-        {result ? (
-          <section className="results">
-
-            <div className="result-header">
-
-              <div>
-                <h2>Inspection Result</h2>
-
-                <p>
-                  {result.inspection.filename}
-                  {result.category && ` • ${formatCategoryLabel(result.category)}`}
-                </p>
-              </div>
-
-              <div
-                className={
-                  result.quality_control.decision === "FAIL"
-                    ? "decision fail"
-                    : "decision pass"
-                }
-              >
-                {result.quality_control.decision}
-              </div>
-
-            </div>
-
-            <div className="metrics">
-
-              <div className="metric">
-                <span>Defect Type</span>
-                <strong>
-                  {result.classification.defect_type}
-                </strong>
-              </div>
-
-              <div className="metric">
-                <span>Confidence</span>
-                <strong>
-                  {result.classification.confidence}%
-                </strong>
-              </div>
-
-              <div className="metric">
-                <span>Anomaly Score</span>
-                <strong>
-                  {result.anomaly_detection.anomaly_score}
-                </strong>
-              </div>
-
-              <div className="metric">
-                <span>Severity</span>
-                <strong className={`severity-badge severity-${severityClass(result.severity.severity_level)}`}>
-                  {result.severity.severity_level}
-                </strong>
-              </div>
-
-            </div>
-
-            <div className="severity">
-
-              <div className="severity-title">
-                <span>Severity Score</span>
+                <div className="upload-icon">
+                  ↑
+                </div>
 
                 <strong>
-                  {result.severity.severity_score}/100
+                  Choose product image
                 </strong>
+
+                <span>
+                  PNG, JPG or JPEG
+                </span>
+
               </div>
 
-              <div className="progress">
+            </label>
+
+            {preview && (
+              <div className="preview-section">
+
+                <div className="image-container">
+
+                  <img
+                    src={preview}
+                    alt="Selected product"
+                    className="inspection-image"
+                  />
+
+                  {result?.localization?.detected &&
+                    result.localization.bounding_box && (
+                      <div
+                        className="defect-box"
+                        style={{
+                          left: `${result.localization.bounding_box.x / 256 * 100}%`,
+                          top: `${result.localization.bounding_box.y / 256 * 100}%`,
+                          width: `${result.localization.bounding_box.width / 256 * 100}%`,
+                          height: `${result.localization.bounding_box.height / 256 * 100}%`
+                        }}
+                      >
+                        <span>Defect</span>
+                      </div>
+                    )}
+
+                </div>
+
+                <div className="preview-info">
+
+                  <strong>{file?.name}</strong>
+
+                  <p>
+                    {result
+                      ? "Inspection completed"
+                      : "Ready for inspection"}
+                  </p>
+
+                </div>
+
+              </div>
+            )}
+
+            <button
+              className="inspect-button"
+              onClick={inspectImage}
+              disabled={!file || loading}
+            >
+              {loading
+                ? "Analyzing..."
+                : "Run AI Inspection"}
+            </button>
+
+            {error && (
+              <div className="error">
+                {error}
+              </div>
+            )}
+
+          </section>
+
+          {result ? (
+            <section className="results">
+
+              <div className="result-header">
+
+                <div>
+                  <h2>Inspection Result</h2>
+
+                  <p>
+                    {result.inspection.filename}
+                    {result.category &&
+                      ` • ${formatCategoryLabel(result.category)}`}
+                  </p>
+                </div>
+
                 <div
-                  className={`progress-bar progress-${severityClass(result.severity.severity_level)}`}
-                  style={{
-                    width: `${Math.min(
-                      result.severity.severity_score,
-                      100
-                    )}%`
-                  }}
-                />
+                  className={
+                    result.quality_control.decision === "FAIL"
+                      ? "decision fail"
+                      : "decision pass"
+                  }
+                >
+                  {result.quality_control.decision}
+                </div>
+
               </div>
 
-            </div>
+              <div className="metrics">
 
-            <div className="recommendation">
+                <div className="metric">
+                  <span>Defect Type</span>
+                  <strong>
+                    {result.classification.defect_type}
+                  </strong>
+                </div>
 
-              <span>
-                Recommended Action
-              </span>
+                <div className="metric">
+                  <span>Confidence</span>
+                  <strong>
+                    {result.classification.confidence}%
+                  </strong>
+                </div>
 
-              <strong>
-                {result.severity.recommended_action}
-              </strong>
+                <div className="metric">
+                  <span>Anomaly Score</span>
+                  <strong>
+                    {result.anomaly_detection.anomaly_score}
+                  </strong>
+                </div>
 
-            </div>
+                <div className="metric">
+                  <span>Severity</span>
 
-          </section>
-        ) : (
+                  <strong
+                    className={`severity-badge severity-${severityClass(
+                      result.severity.severity_level
+                    )}`}
+                  >
+                    {result.severity.severity_level}
+                  </strong>
+
+                </div>
+
+              </div>
+
+              <div className="severity">
+
+                <div className="severity-title">
+
+                  <span>Severity Score</span>
+
+                  <strong>
+                    {result.severity.severity_score}/100
+                  </strong>
+
+                </div>
+
+                <div className="progress">
+
+                  <div
+                    className={`progress-bar progress-${severityClass(
+                      result.severity.severity_level
+                    )}`}
+                    style={{
+                      width: `${Math.min(
+                        result.severity.severity_score,
+                        100
+                      )}%`
+                    }}
+                  />
+
+                </div>
+
+              </div>
+
+              <div className="recommendation">
+
+                <span>
+                  Recommended Action
+                </span>
+
+                <strong>
+                  {result.severity.recommended_action}
+                </strong>
+
+              </div>
+
+            </section>
+          ) : (
+            <section className="results results-empty">
+
+              <div className="empty-state">
+
+                <div className="empty-icon">
+                  ⬡
+                </div>
+
+                <h2>
+                  Awaiting Inspection
+                </h2>
+
+                <p>
+                  Upload a product image and run an inspection
+                  to see results here.
+                </p>
+
+              </div>
+
+            </section>
+          )}
+          
+
+        </main>
+      ) : (
+        <main className="content-grid supervisor-view">
+
+          
           <section className="results results-empty">
-            <div className="empty-state">
-              <div className="empty-icon">⬡</div>
-              <h2>Awaiting Inspection</h2>
-              <p>Upload a product image and run an inspection to see results here.</p>
-            </div>
-          </section>
-        )}
 
-      </main>
+            <div className="empty-state">
+
+              <div className="empty-icon">
+                ⬡
+              </div>
+
+              <h2>
+                Factory Supervisor Dashboard
+              </h2>
+
+              <p>
+                You have view-only access to inspection statistics.
+                Running new inspections requires a Quality Engineer account.
+              </p>
+
+            </div>
+
+          </section>
+
+        </main>
+      )}
+
 
       <footer>
         VisionInspect AI • Intelligent Quality Inspection
