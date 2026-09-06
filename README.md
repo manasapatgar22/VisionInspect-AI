@@ -11,14 +11,16 @@ role-restricted access and persistent inspection records.
 
 * 🔐 JWT authentication with role-based access (`quality_engineer` / `factory_supervisor`)
 * 📷 Product image upload
+* 🖼️ Pre-inspection image quality analysis (sharpness, brightness, contrast, resolution)
 * 🔍 AI-based anomaly detection (ResNet18 feature-distance model)
 * 🏷️ Multi-class defect classification (prototype-based)
 * 📍 Defect localization with bounding box overlay
 * 📊 Weighted severity scoring — `(Size × 30%) + (Location × 25%) + (Type × 25%) + (Confidence × 20%)`
 * ✅ Automated PASS / FAIL / REVIEW decision
 * 💾 Inspection results persisted to the database
-* 📈 Basic inspection statistics dashboard
-* ⚛️ React + Vite frontend, dashboard-style UI with severity color coding
+* 📈 DB-backed analytics: trend, defect-type distribution, severity distribution
+* 📤 CSV and PDF export of inspection data
+* ⚛️ React + Vite frontend, dashboard-style UI with severity color coding and Recharts visualizations
 * 🌐 FastAPI backend
 * 🧪 Built against the MVTec AD dataset (bottle category)
 
@@ -37,8 +39,9 @@ VisionInspect-AI/
 │   │   ├── routes/
 │   │   │   ├── auth.py              # register, login, get_current_user
 │   │   │   ├── inspection.py        # /inspect — the full AI pipeline
-│   │   │   └── analytics.py         # /statistics (used by the dashboard)
+│   │   │   └── analytics.py         # history, statistics, trend, distributions, exports
 │   │   └── services/
+│   │       ├── image_quality.py     # analyze_image_quality (sharpness/brightness/contrast/resolution)
 │   │       ├── anomaly_detection.py # MVTecAnomalyDetector (ResNet18 feature distance)
 │   │       ├── defect_classifier.py # DefectClassifier (prototype-based)
 │   │       ├── defect_detection.py  # localize_defect (bounding box)
@@ -75,7 +78,8 @@ VisionInspect-AI/
 * python-jose, passlib, `bcrypt==4.0.1` (see note below)
 * PyTorch, torchvision
 * OpenCV, NumPy, Pillow
-* React, Vite
+* reportlab (PDF export)
+* React, Vite, Recharts
 
 ## 🔧 Backend Setup
 
@@ -90,9 +94,6 @@ source venv/bin/activate
 
 pip install -r requirements.txt
 ```
-Create the environment:python -m venv venv
-Use code with caution.Activate it: .\venv\Scripts\Activate.ps1
-
 
 > **Known issue:** `bcrypt` 4.1+ breaks `passlib`'s password hashing —
 > registration will fail with `AttributeError: module 'bcrypt' has no
@@ -101,6 +102,7 @@ Use code with caution.Activate it: .\venv\Scripts\Activate.ps1
 > ```bash
 > pip install "bcrypt==4.0.1"
 > ```
+Use code with caution.Activate it: .\venv\Scripts\Activate.ps1
 
 Add the reference dataset before starting the server — the anomaly detector
 needs it to build its "normal" baseline:
@@ -145,7 +147,8 @@ running yet.
 
 ## 🔐 Authentication
 
-`/api/inspection/inspect` requires a valid JWT and one of two roles.
+`/api/inspection/inspect` and the export endpoints require a valid JWT and
+role-appropriate access.
 
 1. Register via Swagger (`POST /api/auth/register`):
    ```json
@@ -171,48 +174,67 @@ running yet.
 |---|---|---|---|
 | POST | `/api/auth/register` | No | Create a user account |
 | POST | `/api/auth/login` | No | Get a JWT access token |
+| GET | `/api/inspection/categories` | No | List available MVTec categories |
 | POST | `/api/inspection/inspect` | Yes (role-restricted) | Upload an image, run the full AI pipeline, persist the result |
+| GET | `/api/analytics/history` | — | Inspection history |
 | GET | `/api/analytics/statistics` | — | Stats shown on the dashboard (total/passed/failed/critical) |
+| GET | `/api/analytics/trend` | — | Daily PASS/FAIL/REVIEW counts |
+| GET | `/api/analytics/defect-distribution` | — | Count of inspections by predicted defect type |
+| GET | `/api/analytics/severity-distribution` | — | Share of inspections by severity level |
+| GET | `/api/analytics/export/csv` | Yes (role-restricted) | Download inspection data as CSV |
+| GET | `/api/analytics/export/pdf` | Yes (role-restricted) | Download inspection data as PDF |
 
 ## 🧠 How Inspection Works
 
-1. **Anomaly detection** — a pretrained ResNet18 extracts features from the
+1. **Image quality check** — the raw uploaded image is scored for sharpness,
+   brightness, contrast, and resolution before any AI processing, flagging
+   issues like blur or poor lighting that could affect result reliability.
+2. **Anomaly detection** — a pretrained ResNet18 extracts features from the
    uploaded image and compares them against the "good" reference set; the
    distance is the anomaly score.
-2. **Classification** — the same feature space is compared against
+3. **Classification** — the same feature space is compared against
    per-class prototypes built from the test set to predict a specific
    defect type (`good`, `broken_large`, `broken_small`, `contamination`).
-3. **Localization** — the uploaded image is diffed against a reference
+4. **Localization** — the uploaded image is diffed against a reference
    image to produce a bounding box around the likely defect region, drawn
    as an overlay in the frontend.
-4. **Severity** — the weighted formula above maps to Critical (80-100) /
+5. **Severity** — the weighted formula above maps to Critical (80-100) /
    High (60-79) / Medium (40-59) / Low (0-39), each shown with a distinct
    color in the UI.
-5. **Quality decision** — anomaly score + severity together produce
+6. **Quality decision** — anomaly score + severity together produce
    PASS / FAIL / REVIEW, which is displayed and saved to the database.
 
 ## ✅ Status
 
 **Done and verified working:**
 - Auth, role-based access control
+- Image quality analysis, surfaced on both backend and frontend
 - Dataset-backed anomaly detection, classification, localization
 - Severity scoring, quality decision
 - Inspection results persisted to the database (`InspectionRecord`)
-- Dashboard-style frontend with severity color coding
+- DB-backed analytics: history, statistics, trend, defect distribution, severity distribution
+- CSV/PDF export of inspection data
+- Dashboard-style frontend with severity color coding and Recharts charts
+
+**Model evaluation (`evaluate_model.py`, bottle category):**
+
+| Metric | Value |
+|---|---|
+| Accuracy | 0.82 |
+| Precision | 0.98 |
+| Recall | 0.78 |
+| F1 Score | 0.87 |
+
+Precision is strong (few false alarms), but recall indicates the anomaly
+threshold is currently missing some true defects (14 false negatives out of
+63 defective test images). Documented as a known limitation for this
+milestone; threshold tuning is a candidate follow-up.
 
 **Known gaps / next steps:**
-- `InspectionRecord` rows are written on every inspection, but no endpoint
-  currently reads them back — `GET /api/analytics/statistics` and any
-  `/history` view still rely on the in-memory `inspection_history` list,
-  which resets on server restart. Wiring a DB-backed history endpoint is
-  the next real improvement.
-- `evaluate_model.py` / `test_anomaly.py` exist but haven't been run for a
-  documented precision/recall/F1 report — worth doing before citing
-  specific accuracy numbers anywhere.
 - No formal UI wireframes were produced — the working UI was built
   directly instead.
-- Docker/cloud deployment not yet attempted (planned for later per the
-  original project's week-by-week schedule).
+- Docker/cloud deployment not yet attempted (planned for Milestone 4 per
+  the original project's week-by-week schedule).
 
 ## 🐛 Troubleshooting Log
 
