@@ -214,6 +214,12 @@ function App() {
     Low: "#16a34a",
     unknown: "#94a3b8"
   };
+  const QUALITY_COLORS = {
+    good: "#16a34a",
+    acceptable: "#eab308",
+    poor: "#dc2626",
+    unknown: "#94a3b8"
+  };
 
   if (!token) {
     return (
@@ -530,6 +536,57 @@ function App() {
                 </strong>
 
               </div>
+
+              {result.image_quality && (
+                <div className="image-quality">
+
+                  <div className="image-quality-header">
+                    <span>Image Quality</span>
+                    <strong
+                      style={{ color: QUALITY_COLORS[result.image_quality.rating] || QUALITY_COLORS.unknown }}
+                    >
+                      {result.image_quality.rating} ({result.image_quality.quality_score}/100)
+                    </strong>
+                  </div>
+
+                  <div className="metrics">
+
+                    <div className="metric">
+                      <span>Resolution</span>
+                      <strong>
+                        {result.image_quality.resolution.width}×{result.image_quality.resolution.height}
+                      </strong>
+                    </div>
+
+                    <div className="metric">
+                      <span>Sharpness</span>
+                      <strong>{result.image_quality.sharpness}</strong>
+                    </div>
+
+                    <div className="metric">
+                      <span>Brightness</span>
+                      <strong>{result.image_quality.brightness}</strong>
+                    </div>
+
+                    <div className="metric">
+                      <span>Contrast</span>
+                      <strong>{result.image_quality.contrast}</strong>
+                    </div>
+
+                  </div>
+
+                  {result.image_quality.issues.length > 0 && (
+                    <div className="quality-issues">
+                      {result.image_quality.issues.map((issue) => (
+                        <span key={issue} className="quality-issue-tag">
+                          {issue.replaceAll("_", " ")}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                </div>
+              )}
 
             </section>
           ) : (
