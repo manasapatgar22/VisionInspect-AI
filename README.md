@@ -234,7 +234,49 @@ bottle test set and found 1.5 gives the best F1: recall rises to 0.92 (only
 positive). This is now the default in `MVTecAnomalyDetector`. Re-run
 `tune_threshold.py` if the reference set or dataset changes.
 
+**Defect classification evaluation (`evaluate_classifier.py`,
+`evaluate_classifier_metrics.py`, bottle category):**
+
+| Class | Precision | Recall | F1 Score |
+|---|---|---|---|
+| broken_large | 1.00 | 0.75 | 0.86 |
+| broken_small | 0.72 | 0.82 | 0.77 |
+| contamination | 1.00 | 0.76 | 0.86 |
+| good | 0.74 | 1.00 | 0.85 |
+| **Macro average** | **0.87** | **0.83** | **0.83** |
+
+Overall accuracy: 0.83 (69/83 correct). Confusion matrix:
+
+```
+broken_large:   broken_large 15, broken_small 5
+broken_small:   broken_small 18, good 4
+contamination:  contamination 16, good 3, broken_small 2
+good:           good 20
+```
+
+`DefectClassifier` is a nearest-centroid baseline (mean ResNet18 feature
+per class vs. 1-NN at inference), explicitly documented in its own
+docstring as "not the final trained production classifier." Two patterns
+stand out: `broken_large` is mistaken for `broken_small` in 25% of cases,
+and both `broken_small` and `contamination` are occasionally classified
+as `good` outright — a more consequential error than a size/type mixup,
+since it means a real defect could pass as good.
+
+**Known evaluation caveat:** `build_prototypes()` is currently called on
+the same `test/` directory that `evaluate_classifier*.py` then scores
+against, capped at 20 images per class. Because MVTec AD only provides
+labeled defect images in `test/` (there is no separate defect train set),
+and most classes have close to 20 images total, the prototypes overlap
+heavily with the evaluation set — for `broken_large` (20 images, cap 20)
+it's a complete overlap. The 0.83 accuracy above is therefore optimistic
+and not a true held-out evaluation. A proper prototype/test split is
+planned as a follow-up (see Known gaps below).
+
 **Known gaps / next steps:**
+- Classifier evaluation needs a genuine held-out split (build prototypes
+  from a subset of each class's images, evaluate only on the remainder)
+  instead of the current overlapping evaluation described above.
+
 - No formal UI wireframes were produced — the working UI was built
   directly instead.
 - Docker/cloud deployment not yet attempted (planned for Milestone 4 per

@@ -53,6 +53,12 @@ def inspection_history(
                 "severity_score": record.severity_score,
                 "severity_level": record.severity_level,
                 "decision": record.decision,
+                "image_quality_score": record.image_quality_score,
+                "image_quality_rating": record.image_quality_rating,
+                "image_quality_issues": (
+                    record.image_quality_issues.split(",")
+                    if record.image_quality_issues else []
+                ),
                 "inspected_by": record.inspected_by,
                 "created_at": record.created_at.isoformat() if record.created_at else None,
             }
@@ -205,7 +211,8 @@ def export_csv(
     writer.writerow([
         "ID", "Filename", "Category", "Defect Type", "Confidence",
         "Anomaly Score", "Severity Score", "Severity Level",
-        "Decision", "Inspected By", "Created At"
+        "Decision", "Image Quality Score", "Image Quality Rating",
+        "Image Quality Issues", "Inspected By", "Created At"
     ])
 
     for record in records:
@@ -219,6 +226,9 @@ def export_csv(
             record.severity_score,
             record.severity_level,
             record.decision,
+            record.image_quality_score,
+            record.image_quality_rating,
+            record.image_quality_issues,
             record.inspected_by,
             record.created_at.isoformat() if record.created_at else ""
         ])
@@ -288,7 +298,7 @@ def export_pdf(
 
     elements.append(Paragraph("Recent Inspections", styles["Heading2"]))
 
-    table_data = [["Filename", "Category", "Defect Type", "Severity", "Decision", "Date"]]
+    table_data = [["Filename", "Category", "Defect Type", "Severity", "Decision", "Img Quality", "Date"]]
 
     for record in recent:
         table_data.append([
@@ -297,6 +307,7 @@ def export_pdf(
             record.defect_type or "",
             record.severity_level or "",
             record.decision or "",
+            record.image_quality_rating or "",
             record.created_at.strftime("%Y-%m-%d") if record.created_at else ""
         ])
 

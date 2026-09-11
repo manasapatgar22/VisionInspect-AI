@@ -21,9 +21,6 @@ from app.services.severity import calculate_severity
 from app.services.quality_control import make_quality_decision
 from app.services.inspection_report import create_inspection_report
 from app.services.defect_detection import localize_defect
-from app.services.inspection_history import (
-    add_inspection
-)
 
 router = APIRouter(
     prefix="/api/inspection",
@@ -422,8 +419,6 @@ async def inspect_image(
         report["category"] = category
         report["image_quality"] = quality_report
 
-        add_inspection(report)
-
         db.add(
             InspectionRecord(
                 filename=file.filename,
@@ -434,6 +429,9 @@ async def inspect_image(
                 severity_score=severity["severity_score"],
                 severity_level=severity["severity_level"],
                 decision=quality["decision"],
+                image_quality_score=quality_report["quality_score"],
+                image_quality_rating=quality_report["rating"],
+                image_quality_issues=",".join(quality_report["issues"]),
                 inspected_by=current_user.username,
             )
         )

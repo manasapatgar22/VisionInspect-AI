@@ -17,5 +17,8 @@ class InspectionRecord(Base):
     severity_score = Column(Float, nullable=True)
     severity_level = Column(String, nullable=True)
     decision = Column(String, nullable=True)
+    image_quality_score = Column(Float, nullable=True)
+    image_quality_rating = Column(String, nullable=True)
+    image_quality_issues = Column(String, nullable=True)  # comma-separated
     inspected_by = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
