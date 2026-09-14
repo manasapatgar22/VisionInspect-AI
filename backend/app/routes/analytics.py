@@ -91,17 +91,49 @@ def inspection_statistics(
         .count()
     )
 
+    review = (
+        db.query(InspectionRecord)
+        .filter(InspectionRecord.decision == "REVIEW")
+        .count()
+    )
+
     critical = (
         db.query(InspectionRecord)
         .filter(InspectionRecord.severity_level == "Critical")
         .count()
     )
 
+    # A "defect" inspection is any non-good classification, regardless
+    # of the final PASS/FAIL/REVIEW decision (severity thresholds mean
+    # a minor defect can still get a PASS or REVIEW decision).
+    defective = (
+        db.query(InspectionRecord)
+        .filter(
+            InspectionRecord.defect_type.isnot(None),
+            InspectionRecord.defect_type != "good"
+        )
+        .count()
+    )
+
+    avg_severity = (
+        db.query(func.avg(InspectionRecord.severity_score))
+        .filter(InspectionRecord.severity_score.isnot(None))
+        .scalar()
+    )
+
+    pass_rate = round((passed / total) * 100, 2) if total else 0
+    defect_rate = round((defective / total) * 100, 2) if total else 0
+    avg_severity_score = round(avg_severity, 2) if avg_severity is not None else 0
+
     return {
         "total_inspections": total,
         "passed": passed,
         "failed": failed,
-        "critical": critical
+        "review": review,
+        "critical": critical,
+        "pass_rate": pass_rate,
+        "defect_rate": defect_rate,
+        "avg_severity_score": avg_severity_score
     }
 
 

@@ -90,7 +90,7 @@ VisionInspect-AI/
 │   │
 │   ├── evaluate_model.py               # Anomaly detector evaluation
 │   ├── evaluate_classifier.py          # Classifier evaluation
-│   ├── evaluate_classifier_metrics.py  # Classification metrics/confusion matrix
+│   ├── evaluate_classifier_holdout.py  # Honest held-out classification metrics/confusion matrix
 │   ├── tune_threshold.py               # Anomaly threshold tuning
 │   ├── test_anomaly.py                 # Anomaly detector test
 │   └── requirements.txt
@@ -743,33 +743,33 @@ if the reference dataset or evaluation setup changes.
 
 # 🏷️ Defect Classification Evaluation
 
-Current evaluation results for the MVTec bottle category:
+Evaluated with a genuine held-out split: for each class, 10 images are used only to build prototypes, and the remaining images (never seen while building prototypes) are used only for evaluation. See `evaluate_classifier_holdout.py`.
 
-| Class             | Precision |   Recall | F1 Score |
-| ----------------- | --------: | -------: | -------: |
-| broken_large      |      1.00 |     0.75 |     0.86 |
-| broken_small      |      0.72 |     0.82 |     0.77 |
-| contamination     |      1.00 |     0.76 |     0.86 |
-| good              |      0.74 |     1.00 |     0.85 |
-| **Macro Average** |  **0.87** | **0.83** | **0.83** |
+| Class             | Precision |   Recall | F1 Score | n (held-out) |
+| ----------------- | --------: | -------: | -------: | ------------: |
+| broken_large      |      1.00 |     0.80 |     0.89 |            10 |
+| broken_small      |      0.77 |     0.83 |     0.80 |            12 |
+| contamination     |      1.00 |     0.64 |     0.78 |            11 |
+| good              |      0.67 |     1.00 |     0.80 |            10 |
+| **Macro Average** |  **0.86** | **0.82** | **0.82** |            43 |
 
 Overall accuracy:
 
 ```text
-0.83 (69/83 correct)
+0.8140 (35/43 correct)
 ```
 
 ---
 
-# ⚠️ Evaluation Caveat
+# ⚠️ Evaluation Notes & Known Limitation
 
 The current `DefectClassifier` is a prototype-based nearest-centroid baseline using ResNet18 features.
 
-The current evaluation uses prototype images from the same `test/` directory that is subsequently evaluated.
+This is a genuine held-out evaluation: prototypes are built from a support set, and metrics are computed only on a disjoint query set of images the classifier never saw while building those prototypes. (An earlier version of this evaluation built prototypes and computed metrics from the same `test/` directory, which inflated accuracy to ~0.83; that overlap has been fixed.)
 
-Therefore, the current classification metrics are **optimistic** and should not be considered a fully held-out production evaluation.
+**Known limitation:** `good` has perfect recall (1.00) but the lowest precision (0.67) of any class — 5 held-out defect images (3 `contamination`, 2 `broken_small`) were misclassified as `good`. In a QC system this is the highest-priority error type, since it means real defects could be passed through as non-defective. Improving this is planned future work (see below), for example by increasing the number of support images per class or normalizing extracted features before computing distances to prototypes.
 
-A proper prototype/evaluation split is a planned improvement.
+Held-out support/query sizes are still small (10–12 images per class), since the MVTec `test/` split for `bottle` only has 20–22 images per class total. Results should be read as directionally honest rather than statistically precise.
 
 ---
 
@@ -913,7 +913,8 @@ frontend/vite.config.js
 
 The following improvements can be addressed during final validation and deployment:
 
-* Create a genuine held-out split for defect-classification evaluation
+* ~~Create a genuine held-out split for defect-classification evaluation~~ ✅ Done — see Defect Classification Evaluation above
+* Reduce good/defect confusion (5 held-out defects misclassified as `good`) — try more support images per class and/or feature normalization
 * Improve classifier performance with a trained production classifier
 * Add more comprehensive image-quality aggregate analytics
 * Expand PDF reports with detailed image-quality metrics
