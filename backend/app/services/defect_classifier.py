@@ -74,20 +74,28 @@ class DefectClassifier:
 
                 feature = (
                     self.detector.extract_features(
-                        image
+                    image
+                        )
                     )
-                )
+
+                feature = feature / (
+                    np.linalg.norm(feature) + 1e-8
+                    )
 
                 features.append(feature)
 
             if features:
 
-                self.prototypes[class_name] = (
-                    np.mean(
-                        features,
-                        axis=0
-                    )
+                prototype = np.mean(
+                features,
+                axis=0
                 )
+
+                prototype = prototype / (
+                np.linalg.norm(prototype) + 1e-8
+                 )
+
+                self.prototypes[class_name] = prototype
 
                 counts[class_name] = len(
                     features

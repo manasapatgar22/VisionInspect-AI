@@ -1,4 +1,5 @@
 from pathlib import Path
+import argparse
 
 import cv2
 import numpy as np
@@ -6,14 +7,14 @@ import numpy as np
 from app.services.anomaly_detection import MVTecAnomalyDetector
 
 
-DATASET = Path("dataset/mvtec/bottle")
+DATASET_ROOT = Path("dataset/mvtec")
 
 # Start with this threshold.
 # We'll improve it based on the evaluation results.
 
 
 
-def collect_images():
+def collect_images(DATASET):
     """
     Collect normal and defective MVTec test images.
     """
@@ -42,9 +43,20 @@ def collect_images():
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--category",
+        required=True,
+        help="MVTec category to evaluate"
+    )
+
+    args = parser.parse_args()
+
+    DATASET = DATASET_ROOT / args.category
 
     detector = MVTecAnomalyDetector(
-    max_reference_images=209
+    max_reference_images=209,
+    threshold_std_multiplier=1.5
     )
 
     reference_count = detector.build_reference(
@@ -56,7 +68,7 @@ def main():
     )
 
     good_images, defective_images = (
-        collect_images()
+        collect_images(DATASET)
     )
 
     print(

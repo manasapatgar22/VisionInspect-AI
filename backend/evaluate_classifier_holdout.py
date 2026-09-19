@@ -33,8 +33,7 @@ from app.services.anomaly_detection import MVTecAnomalyDetector
 from app.services.defect_classifier import DefectClassifier
 
 
-DATASET = Path("dataset/mvtec/bottle/test")
-TRAIN_GOOD = Path("dataset/mvtec/bottle/train/good")
+DATASET_ROOT = Path("dataset/mvtec")
 
 
 def collect_class_images(dataset_dir: Path):
@@ -226,6 +225,12 @@ def main():
         description="Held-out defect classification evaluation."
     )
     parser.add_argument(
+    "--category",
+    type=str,
+    required=True,
+    help="MVTec category to evaluate, e.g. bottle, cable, capsule.",
+    )
+    parser.add_argument(
         "--support-per-class",
         type=int,
         default=10,
@@ -238,6 +243,11 @@ def main():
         help="Random seed for the support/query split (default: 42).",
     )
     args = parser.parse_args()
+
+    category_path = DATASET_ROOT / args.category
+
+    DATASET = category_path / "test"
+    TRAIN_GOOD = category_path / "train" / "good"
 
     detector = MVTecAnomalyDetector(max_reference_images=209)
     detector.build_reference(str(TRAIN_GOOD))
