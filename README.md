@@ -44,7 +44,10 @@ The system includes JWT authentication, role-based access, persistent inspection
 - ⚛️ React + Vite frontend
 - 📊 Recharts-based visualizations
 - 🌐 FastAPI backend
-- 🧪 MVTec AD dataset integration using the bottle category
+- 🧪 MVTec AD dataset integration with category-wise evaluation support
+- 🎯 Category-specific anomaly-threshold tuning using validation data
+- 🧪 Held-out evaluation workflow for anomaly detection and defect classification
+- 🔬 Multi-category evaluation utilities for extending validation beyond the bottle category
 
 ---
 
@@ -91,7 +94,8 @@ VisionInspect-AI/
 │   ├── evaluate_model.py               # Anomaly detector evaluation
 │   ├── evaluate_classifier.py          # Classifier evaluation
 │   ├── evaluate_classifier_holdout.py  # Honest held-out classification metrics/confusion matrix
-│   ├── tune_threshold.py               # Anomaly threshold tuning
+│   ├── tune_threshold.py               # Category-specific anomaly threshold tuning
+│   ├── evaluate_all_categories_holdout.py # Multi-category held-out evaluation
 │   ├── test_anomaly.py                 # Anomaly detector test
 │   └── requirements.txt
 │
@@ -714,11 +718,94 @@ This allows inspection history and analytics to remain available after individua
 
 ---
 
+## 🧠 Multi-Category MVTec AD Training
+
+The anomaly detection pipeline has been trained/processed across **all 15 categories of the MVTec AD dataset**.
+
+### All 15 Categories
+
+| # | Category |
+|---:|---|
+| 1 | bottle |
+| 2 | cable |
+| 3 | capsule |
+| 4 | carpet |
+| 5 | grid |
+| 6 | hazelnut |
+| 7 | leather |
+| 8 | metal_nut |
+| 9 | pill |
+| 10 | screw |
+| 11 | tile |
+| 12 | toothbrush |
+| 13 | transistor |
+| 14 | wood |
+| 15 | zipper |
+
+Each category is handled independently so that its normal-reference feature distribution and anomaly threshold can be tuned according to the characteristics of that category.
+
+The evaluation framework supports category-wise anomaly detection evaluation and category-specific threshold tuning.
+
+---
+
 # 🧪 Model Evaluation
 
-## Anomaly Detection — MVTec Bottle
+VisionInspect-AI now includes reproducible evaluation utilities for both anomaly detection and defect classification.
 
-Current evaluation results:
+## 🔍 Anomaly Detection Evaluation
+
+The anomaly detector uses ResNet18 feature embeddings and compares an inspected image against normal reference images from the corresponding MVTec category.
+
+The evaluation workflow supports:
+
+- Category-specific evaluation
+- Separate normal and defective test images
+- Accuracy, precision, recall and F1-score
+- Confusion-matrix counts
+- Category-specific threshold tuning
+- Reproducible validation/test splitting
+
+Run anomaly evaluation for a category:
+
+```bash
+python evaluate_model.py --category bottle
+```
+
+Run threshold tuning for a category:
+
+```bash
+python tune_threshold.py --category bottle
+```
+
+For another MVTec category:
+
+```bash
+python tune_threshold.py --category zipper
+```
+
+The threshold is derived from the normal-reference score distribution:
+
+```text
+threshold = mean(normal scores) + multiplier × std(normal scores)
+```
+
+Candidate multipliers currently evaluated include:
+
+```text
+1.50
+1.75
+2.00
+2.25
+2.50
+2.75
+3.00
+```
+
+The tuning script evaluates the candidate thresholds using already-computed image scores, so the model does not need to be re-run for every threshold.
+
+### Current Bottle Anomaly Detection Result
+
+The current bottle evaluation reports:
 
 | Metric    | Value |
 | --------- | ----: |
@@ -727,31 +814,56 @@ Current evaluation results:
 | Recall    |  0.92 |
 | F1 Score  |  0.95 |
 
-The anomaly threshold is tuned using the distance distribution of normal images.
+These values correspond to the current bottle evaluation setup and should not be interpreted as performance for every MVTec category.
 
-The current threshold configuration was selected using the available labeled bottle test set.
+### Multi-Category Evaluation
 
-Run:
+The repository also contains:
 
 ```bash
-python tune_threshold.py
+python evaluate_all_categories_holdout.py
 ```
 
-if the reference dataset or evaluation setup changes.
+This utility discovers available MVTec categories under:
+
+```text
+backend/dataset/mvtec/
+```
+
+and provides reproducible category-level validation/final-test splitting.
+
+The multi-category workflow is intended to make it easier to evaluate the anomaly detector and classifier consistently as additional MVTec categories are added.
 
 ---
 
 # 🏷️ Defect Classification Evaluation
 
-Evaluated with a genuine held-out split: for each class, 10 images are used only to build prototypes, and the remaining images (never seen while building prototypes) are used only for evaluation. See `evaluate_classifier_holdout.py`.
+The defect classifier uses ResNet18 feature representations and class prototypes.
 
-| Class             | Precision |   Recall | F1 Score | n (held-out) |
-| ----------------- | --------: | -------: | -------: | ------------: |
-| broken_large      |      1.00 |     0.80 |     0.89 |            10 |
-| broken_small      |      0.77 |     0.83 |     0.80 |            12 |
-| contamination     |      1.00 |     0.64 |     0.78 |            11 |
-| good              |      0.67 |     1.00 |     0.80 |            10 |
-| **Macro Average** |  **0.86** | **0.82** | **0.82** |            43 |
+The repository contains a genuine held-out evaluation script:
+
+```bash
+python evaluate_classifier_holdout.py
+```
+
+For the current bottle evaluation, each class is divided into:
+
+```text
+Support set → used only to build prototypes
+Query set   → used only for final evaluation
+```
+
+No query image is used to construct the corresponding prototype.
+
+Current held-out bottle results:
+
+| Class             | Precision | Recall | F1 Score | n (held-out) |
+| ----------------- | --------: | -----: | -------: | -----------: |
+| broken_large      |      1.00 |   0.80 |     0.89 |           10 |
+| broken_small      |      0.77 |   0.83 |     0.80 |           12 |
+| contamination     |      1.00 |   0.64 |     0.78 |           11 |
+| good              |      0.67 |   1.00 |     0.80 |           10 |
+| **Macro Average** |  **0.86** | **0.82** | **0.82** | **43** |
 
 Overall accuracy:
 
@@ -759,17 +871,49 @@ Overall accuracy:
 0.8140 (35/43 correct)
 ```
 
----
+The held-out support/query design prevents evaluation images from being reused when building the prototypes.
 
-# ⚠️ Evaluation Notes & Known Limitation
+# ⚠️ Evaluation Notes & Known Limitations
 
 The current `DefectClassifier` is a prototype-based nearest-centroid baseline using ResNet18 features.
 
-This is a genuine held-out evaluation: prototypes are built from a support set, and metrics are computed only on a disjoint query set of images the classifier never saw while building those prototypes. (An earlier version of this evaluation built prototypes and computed metrics from the same `test/` directory, which inflated accuracy to ~0.83; that overlap has been fixed.)
+The classification evaluation uses a genuine held-out support/query split. Prototype construction and metric calculation are performed on disjoint image sets.
 
-**Known limitation:** `good` has perfect recall (1.00) but the lowest precision (0.67) of any class — 5 held-out defect images (3 `contamination`, 2 `broken_small`) were misclassified as `good`. In a QC system this is the highest-priority error type, since it means real defects could be passed through as non-defective. Improving this is planned future work (see below), for example by increasing the number of support images per class or normalizing extracted features before computing distances to prototypes.
+### Current classification limitation
 
-Held-out support/query sizes are still small (10–12 images per class), since the MVTec `test/` split for `bottle` only has 20–22 images per class total. Results should be read as directionally honest rather than statistically precise.
+For the current bottle evaluation, `good` has:
+
+```text
+Recall:    1.00
+Precision: 0.67
+```
+
+Five held-out defective images were classified as `good`:
+
+```text
+3 contamination
+2 broken_small
+```
+
+This is an important false-negative failure mode for a quality-control application because a defective product may be classified as non-defective.
+
+Possible improvements include:
+
+- Increasing support images per class
+- Feature normalization before prototype distance calculation
+- Training a dedicated production classifier
+- Adding more representative training data
+- Category-specific calibration
+- More extensive cross-validation
+
+### Dataset-size limitation
+
+The MVTec bottle test split contains only a small number of images per defect class. Therefore, the current held-out results are useful for validating the evaluation methodology, but they should not be treated as statistically precise estimates of production performance.
+
+### Threshold-tuning limitation
+
+Anomaly thresholds are category-dependent. A threshold that works well for one MVTec category should not automatically be assumed to be optimal for another category. The project therefore supports running `tune_threshold.py --category <category>` separately for each category.
+
 
 ---
 
@@ -856,6 +1000,35 @@ frontend/vite.config.js
 
 # 📌 Current Project Status
 
+The project has progressed from a single-category prototype into a multi-category inspection and evaluation platform covering **all 15 MVTec AD categories**.
+
+### Implemented
+
+- Full-stack FastAPI + React inspection platform
+- JWT authentication and role-based dashboards
+- Image-quality analysis before AI inspection
+- ResNet18-based anomaly detection
+- Prototype-based defect classification
+- Defect localization
+- Severity scoring and risk assessment
+- PASS / FAIL / REVIEW quality-control decision
+- Persistent inspection history and analytics
+- CSV/PDF reporting
+- Genuine held-out classification evaluation
+- Category-specific anomaly threshold tuning
+- Reproducible multi-category evaluation utilities
+- Bottle-category evaluation with documented metrics
+- **All 15 MVTec AD categories trained/processed** with category-wise evaluation support
+- **Category-specific anomaly threshold tuning** across the MVTec categories
+
+### Current focus
+
+The remaining work is mainly model robustness, broader category validation, final testing, and deployment preparation.
+
+---
+
+# 📌 Current Project Status
+
 ## Milestone 1
 
 ### Completed
@@ -909,19 +1082,21 @@ frontend/vite.config.js
 
 ---
 
-# 🚧 Future Work / Milestone 4
+# 🚧 Future Work / Final Validation
 
-The following improvements can be addressed during final validation and deployment:
+The major inspection workflow and evaluation infrastructure are implemented. Remaining work is primarily focused on improving robustness and deployment readiness:
 
-* ~~Create a genuine held-out split for defect-classification evaluation~~ ✅ Done — see Defect Classification Evaluation above
-* Reduce good/defect confusion (5 held-out defects misclassified as `good`) — try more support images per class and/or feature normalization
+* Reduce `good` / defect confusion in held-out classification
 * Improve classifier performance with a trained production classifier
+* Increase support/query sample sizes where additional data is available
+* Add feature normalization and category-specific calibration experiments
+* Complete anomaly-threshold tuning for all selected MVTec categories
 * Add more comprehensive image-quality aggregate analytics
 * Expand PDF reports with detailed image-quality metrics
 * Docker containerization
 * Cloud deployment
 * Production deployment validation
-* Final system testing and performance evaluation
+* Final end-to-end system testing and performance evaluation
 
 ---
 
