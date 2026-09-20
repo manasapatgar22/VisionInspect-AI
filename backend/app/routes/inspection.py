@@ -20,7 +20,9 @@ from app.services.defect_classifier import DefectClassifier
 from app.services.severity import calculate_severity
 from app.services.quality_control import make_quality_decision
 from app.services.inspection_report import create_inspection_report
-from app.services.defect_detection import localize_defect
+from app.services.defect_detection import (
+    localize_defect_multi_reference
+)
 
 router = APIRouter(
     prefix="/api/inspection",
@@ -272,28 +274,48 @@ async def inspect_image(
         # Defect localization
         # -------------------------------------------------
 
+        # Use multiple normal reference images for robust defect localization.
+        # Limit to 20 references to reduce processing time.
         reference_paths = list(
             reference_directory.glob("*.png")
-        )
+        )[:20]
 
         if reference_paths:
 
-            reference_image = cv2.imread(
-                str(reference_paths[0])
-            )
+            reference_images = [
+                cv2.imread(str(path))
+                for path in reference_paths
+            ]
 
-            reference_image = cv2.resize(
-                reference_image,
-                (256, 256)
-            )
+            reference_images = [
+                ref
+                for ref in reference_images
+                if ref is not None
+            ]
 
-            localization = localize_defect(
-                image=cv2.resize(
-                    image,
-                    (256, 256)
-                ),
-                reference=reference_image
-            )
+            if reference_images:
+
+                localization = localize_defect_multi_reference(
+                    image=cv2.resize(
+                        image,
+                        (256, 256)
+                    ),
+                    references=[
+                        cv2.resize(
+                            ref,
+                            (256, 256)
+                        )
+                        for ref in reference_images
+                    ]
+                )
+
+            else:
+
+                localization = {
+                    "detected": False,
+                    "bounding_box": None,
+                    "defect_area_percent": 0.0
+                }
 
         else:
 
