@@ -29,6 +29,16 @@ router = APIRouter(
 
 DATASET_ROOT = Path("dataset/mvtec")
 
+# Tuned anomaly threshold multipliers by MVTec category
+THRESHOLD_MULTIPLIERS = {
+    "bottle": 1.5,
+    "grid": 2.0,
+    "tile": 1.5,
+    "leather": 2.5,
+    "wood": 1.75,
+    "zipper": 1.5,
+}
+
 # ---------------------------------------------------------
 # PER-CATEGORY MODEL CACHE
 #
@@ -76,7 +86,8 @@ def get_models_for_category(category: str):
 
     try:
         detector = MVTecAnomalyDetector(
-            max_reference_images=200
+        max_reference_images=200,
+        threshold_std_multiplier=THRESHOLD_MULTIPLIERS.get(category, 1.5)
         )
 
         detector.build_reference(
