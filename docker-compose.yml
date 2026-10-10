@@ -1,0 +1,50 @@
+services:
+
+  db:
+    image: postgres:16
+    container_name: visioninspect-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: visioninspect
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: manasa123
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d visioninspect"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: visioninspect-backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql+psycopg2://postgres:manasa123@db:5432/visioninspect
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/dataset:/app/dataset
+
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: visioninspect-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "5173:80"
+
+
+volumes:
+  postgres_data:

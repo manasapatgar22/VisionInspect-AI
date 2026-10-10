@@ -8,7 +8,7 @@ from torchvision import models, transforms
 
 class MVTecAnomalyDetector:
 
-    def __init__(self, max_reference_images=20, threshold_std_multiplier=1.5):
+    def __init__(self, max_reference_images=50, threshold_std_multiplier=1.5):
         """
         threshold_std_multiplier controls how far above the mean
         normal-image distance a score has to be before it's flagged

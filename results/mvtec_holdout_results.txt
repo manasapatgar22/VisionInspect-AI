@@ -671,3 +671,24 @@ IMPORTANT:
 • Classification prototypes were built using support images only.
 • Classification metrics were calculated using separate query images.
 • Random seed is fixed at 42 for reproducibility.
+
+
+
+
+| Category   | Anomaly Accuracy | Precision | Recall |     F1 |
+| ---------- | ---------------: | --------: | -----: | -----: |
+| bottle     |           88.46% |    94.74% | 90.00% | 92.31% |
+| cable      |           58.33% |    81.25% | 43.33% | 56.52% |
+| capsule    |           43.90% |    92.31% | 35.29% | 43.75% |
+| carpet     |           56.41% |    76.00% | 63.33% | 69.09% |
+| grid       |           29.63% |      100% |  5.00% |  9.52% |
+| hazelnut   |           66.67% |      100% | 50.00% | 66.67% |
+| leather    |           87.50% |    87.88% | 96.67% | 91.95% |
+| metal_nut  |           58.33% |      100% | 48.28% | 65.12% |
+| pill       |           33.33% |      100% | 21.74% | 35.71% |
+| screw      |           33.33% |    83.33% | 13.16% | 22.22% |
+| tile       |           89.47% |    92.86% | 92.86% | 92.86% |
+| toothbrush |           38.46% |      100% | 11.11% | 20.00% |
+| transistor |           80.00% |    87.50% | 58.33% | 70.00% |
+| wood       |           88.46% |    94.74% | 90.00% | 92.31% |
+| zipper     |           71.43% |    96.30% | 66.67% | 78.43% |

@@ -1,0 +1,673 @@
+python evaluate_all_categories_holdout.py
+==============================================================================================================
+MVTec 15-Category Held-Out Evaluation
+==============================================================================================================
+Found 15 categories:
+bottle, cable, capsule, carpet, grid, hazelnut, leather, metal_nut, pill, screw, tile, toothbrush, transistor, wood, zipper
+
+Validation ratio: 70%
+Final test ratio: 30%
+Classification support ratio: 70%
+Classification query ratio: 30%
+Random seed: 42
+
+==============================================================================================================
+Category: bottle
+==============================================================================================================
+
+  Threshold selection (VALIDATION SET):
+    best multiplier = 1.50
+    threshold = 6.098748
+    validation accuracy = 0.9474
+    validation precision = 1.0000
+    validation recall = 0.9302
+    validation F1 = 0.9639
+
+  FINAL anomaly detection (UNTOUCHED TEST SET):
+    accuracy = 0.8846
+    precision = 0.9474
+    recall = 0.9000
+    F1 = 0.9231
+    TP=18 TN=5 FP=1 FN=2
+    final good images = 6
+    final defective images = 20
+
+  FINAL defect classification (SUPPORT → QUERY):
+    accuracy = 0.7308
+    macro F1 = 0.7265
+    correct = 19/26
+
+    Support images:
+      broken_large              14
+      broken_small              15
+      contamination             14
+      good                      14
+
+    Query images:
+      broken_large              6
+      broken_small              7
+      contamination             7
+      good                      6
+
+==============================================================================================================
+Category: cable
+==============================================================================================================
+
+  Threshold selection (VALIDATION SET):
+    best multiplier = 1.50
+    threshold = 12.524225
+    validation accuracy = 0.6176
+    validation precision = 0.8966
+    validation recall = 0.4194
+    validation F1 = 0.5714
+
+  FINAL anomaly detection (UNTOUCHED TEST SET):
+    accuracy = 0.5833
+    precision = 0.8125
+    recall = 0.4333
+    F1 = 0.5652
+    TP=13 TN=15 FP=3 FN=17
+    final good images = 18
+    final defective images = 30
+
+  FINAL defect classification (SUPPORT → QUERY):
+    accuracy = 0.5417
+    macro F1 = 0.5157
+    correct = 26/48
+
+    Support images:
+      bent_wire                 9
+      cable_swap                8
+      combined                  7
+      cut_inner_insulation      9
+      cut_outer_insulation      7
+      good                      40
+      missing_cable             8
+      missing_wire              7
+      poke_insulation           7
+
+    Query images:
+      bent_wire                 4
+      cable_swap                4
+      combined                  4
+      cut_inner_insulation      5
+      cut_outer_insulation      3
+      good                      18
+      missing_cable             4
+      missing_wire              3
+      poke_insulation           3
+
+==============================================================================================================
+Category: capsule
+==============================================================================================================
+
+  Threshold selection (VALIDATION SET):
+    best multiplier = 1.50
+    threshold = 7.662146
+    validation accuracy = 0.4396
+    validation precision = 0.8333
+    validation recall = 0.4000
+    validation F1 = 0.5405
+
+  FINAL anomaly detection (UNTOUCHED TEST SET):
+    accuracy = 0.4390
+    precision = 0.9231
+    recall = 0.3529
+    F1 = 0.5106
+    TP=12 TN=6 FP=1 FN=22
+    final good images = 7
+    final defective images = 34
+
+  FINAL defect classification (SUPPORT → QUERY):
+    accuracy = 0.2683
+    macro F1 = 0.2530
+    correct = 11/41
+
+    Support images:
+      crack                     16
+      faulty_imprint            15
+      good                      16
+      poke                      14
+      scratch                   16
+      squeeze                   14
+
+    Query images:
+      crack                     7
+      faulty_imprint            7
+      good                      7
+      poke                      7
+      scratch                   7
+      squeeze                   6
+
+==============================================================================================================
+Category: carpet
+==============================================================================================================
+
+  Threshold selection (VALIDATION SET):
+    best multiplier = 1.50
+    threshold = 3.156470
+    validation accuracy = 0.7051
+    validation precision = 0.8750
+    validation recall = 0.7119
+    validation F1 = 0.7850
+
+  FINAL anomaly detection (UNTOUCHED TEST SET):
+    accuracy = 0.5641
+    precision = 0.7600
+    recall = 0.6333
+    F1 = 0.6909
+    TP=19 TN=3 FP=6 FN=11
+    final good images = 9
+    final defective images = 30
+
+  FINAL defect classification (SUPPORT → QUERY):
+    accuracy = 0.3846
+    macro F1 = 0.4035
+    correct = 15/39
+
+    Support images:
+      color                     13
+      cut                       11
+      good                      19
+      hole                      11
+      metal_contamination       11
+      thread                    13
+
+    Query images:
+      color                     6
+      cut                       6
+      good                      9
+      hole                      6
+      metal_contamination       6
+      thread                    6
+
+==============================================================================================================
+Category: grid
+==============================================================================================================
+
+  Threshold selection (VALIDATION SET):
+    best multiplier = 1.75
+    threshold = 14.909560
+    validation accuracy = 0.2941
+    validation precision = 0.6000
+    validation recall = 0.0811
+    validation F1 = 0.1429
+
+  FINAL anomaly detection (UNTOUCHED TEST SET):
+    accuracy = 0.2963
+    precision = 1.0000
+    recall = 0.0500
+    F1 = 0.0952
+    TP=1 TN=7 FP=0 FN=19
+    final good images = 7
+    final defective images = 20
+
+  FINAL defect classification (SUPPORT → QUERY):
+    accuracy = 0.2222
+    macro F1 = 0.1829
+    correct = 6/27
+
+    Support images:
+      bent                      8
+      broken                    8
+      glue                      7
+      good                      14
+      metal_contamination       7
+      thread                    7
+
+    Query images:
+      bent                      4
+      broken                    4
+      glue                      4
+      good                      7
+      metal_contamination       4
+      thread                    4
+
+==============================================================================================================
+Category: hazelnut
+==============================================================================================================
+
+  Threshold selection (VALIDATION SET):
+    best multiplier = 1.50
+    threshold = 15.958922
+    validation accuracy = 0.7162
+    validation precision = 0.9310
+    validation recall = 0.5870
+    validation F1 = 0.7200
+
+  FINAL anomaly detection (UNTOUCHED TEST SET):
+    accuracy = 0.6667
+    precision = 1.0000
+    recall = 0.5000
+    F1 = 0.6667
+    TP=12 TN=12 FP=0 FN=12
+    final good images = 12
+    final defective images = 24
+
+  FINAL defect classification (SUPPORT → QUERY):
+    accuracy = 0.6944
+    macro F1 = 0.6918
+    correct = 25/36
+
+    Support images:
+      crack                     12
+      cut                       11
+      good                      28
+      hole                      12
+      print                     11
+
+    Query images:
+      crack                     6
+      cut                       6
+      good                      12
+      hole                      6
+      print                     6
+
+==============================================================================================================
+Category: leather
+==============================================================================================================
+
+  Threshold selection (VALIDATION SET):
+    best multiplier = 2.50
+    threshold = 4.124581
+    validation accuracy = 0.8333
+    validation precision = 0.8750
+    validation recall = 0.9032
+    validation F1 = 0.8889
+
+  FINAL anomaly detection (UNTOUCHED TEST SET):
+    accuracy = 0.8750
+    precision = 0.8788
+    recall = 0.9667
+    F1 = 0.9206
+    TP=29 TN=6 FP=4 FN=1
+    final good images = 10
+    final defective images = 30
+
+  FINAL defect classification (SUPPORT → QUERY):
+    accuracy = 0.7000
+    macro F1 = 0.6817
+    correct = 28/40
+
+    Support images:
+      color                     13
+      cut                       13
+      fold                      11
+      glue                      13
+      good                      22
+      poke                      12
+
+    Query images:
+      color                     6
+      cut                       6
+      fold                      6
+      glue                      6
+      good                      10
+      poke                      6
+
+==============================================================================================================
+Category: metal_nut
+==============================================================================================================
+
+  Threshold selection (VALIDATION SET):
+    best multiplier = 1.50
+    threshold = 11.312989
+    validation accuracy = 0.5443
+    validation precision = 0.9375
+    validation recall = 0.4688
+    validation F1 = 0.6250
+
+  FINAL anomaly detection (UNTOUCHED TEST SET):
+    accuracy = 0.5833
+    precision = 1.0000
+    recall = 0.4828
+    F1 = 0.6512
+    TP=14 TN=7 FP=0 FN=15
+    final good images = 7
+    final defective images = 29
+
+  FINAL defect classification (SUPPORT → QUERY):
+    accuracy = 0.5833
+    macro F1 = 0.5850
+    correct = 21/36
+
+    Support images:
+      bent                      17
+      color                     15
+      flip                      16
+      good                      15
+      scratch                   16
+
+    Query images:
+      bent                      8
+      color                     7
+      flip                      7
+      good                      7
+      scratch                   7
+
+==============================================================================================================
+Category: pill
+==============================================================================================================
+
+  Threshold selection (VALIDATION SET):
+    best multiplier = 1.50
+    threshold = 8.868233
+    validation accuracy = 0.4159
+    validation precision = 0.9394
+    validation recall = 0.3263
+    validation F1 = 0.4844
+
+  FINAL anomaly detection (UNTOUCHED TEST SET):
+    accuracy = 0.3333
+    precision = 1.0000
+    recall = 0.2174
+    F1 = 0.3571
+    TP=10 TN=8 FP=0 FN=36
+    final good images = 8
+    final defective images = 46
+
+  FINAL defect classification (SUPPORT → QUERY):
+    accuracy = 0.2222
+    macro F1 = 0.2748
+    correct = 12/54
+
+    Support images:
+      color                     17
+      combined                  11
+      contamination             14
+      crack                     18
+      faulty_imprint            13
+      good                      18
+      pill_type                 6
+      scratch                   16
+
+    Query images:
+      color                     8
+      combined                  6
+      contamination             7
+      crack                     8
+      faulty_imprint            6
+      good                      8
+      pill_type                 3
+      scratch                   8
+
+==============================================================================================================
+Category: screw
+==============================================================================================================
+
+  Threshold selection (VALIDATION SET):
+    best multiplier = 1.50
+    threshold = 15.342909
+    validation accuracy = 0.3303
+    validation precision = 0.7500
+    validation recall = 0.1481
+    validation F1 = 0.2474
+
+  FINAL anomaly detection (UNTOUCHED TEST SET):
+    accuracy = 0.3333
+    precision = 0.8333
+    recall = 0.1316
+    F1 = 0.2273
+    TP=5 TN=12 FP=1 FN=33
+    final good images = 13
+    final defective images = 38
+
+  FINAL defect classification (SUPPORT → QUERY):
+    accuracy = 0.1961
+    macro F1 = 0.1734
+    correct = 10/51
+
+    Support images:
+      good                      28
+      manipulated_front         16
+      scratch_head              16
+      scratch_neck              17
+      thread_side               16
+      thread_top                16
+
+    Query images:
+      good                      13
+      manipulated_front         8
+      scratch_head              8
+      scratch_neck              8
+      thread_side               7
+      thread_top                7
+
+==============================================================================================================
+Category: tile
+==============================================================================================================
+
+  Threshold selection (VALIDATION SET):
+    best multiplier = 1.50
+    threshold = 6.340932
+    validation accuracy = 0.8481
+    validation precision = 0.9583
+    validation recall = 0.8214
+    validation F1 = 0.8846
+
+  FINAL anomaly detection (UNTOUCHED TEST SET):
+    accuracy = 0.8947
+    precision = 0.9286
+    recall = 0.9286
+    F1 = 0.9286
+    TP=26 TN=8 FP=2 FN=2
+    final good images = 10
+    final defective images = 28
+
+  FINAL defect classification (SUPPORT → QUERY):
+    accuracy = 0.8158
+    macro F1 = 0.8180
+    correct = 31/38
+
+    Support images:
+      crack                     11
+      glue_strip                12
+      good                      23
+      gray_stroke               11
+      oil                       12
+      rough                     10
+
+    Query images:
+      crack                     6
+      glue_strip                6
+      good                      10
+      gray_stroke               5
+      oil                       6
+      rough                     5
+
+==============================================================================================================
+Category: toothbrush
+==============================================================================================================
+
+  Threshold selection (VALIDATION SET):
+    best multiplier = 1.50
+    threshold = 15.301583
+    validation accuracy = 0.6207
+    validation precision = 1.0000
+    validation recall = 0.4762
+    validation F1 = 0.6452
+
+  FINAL anomaly detection (UNTOUCHED TEST SET):
+    accuracy = 0.3846
+    precision = 1.0000
+    recall = 0.1111
+    F1 = 0.2000
+    TP=1 TN=4 FP=0 FN=8
+    final good images = 4
+    final defective images = 9
+
+  FINAL defect classification (SUPPORT → QUERY):
+    accuracy = 0.6154
+    macro F1 = 0.5752
+    correct = 8/13
+
+    Support images:
+      defective                 21
+      good                      8
+
+    Query images:
+      defective                 9
+      good                      4
+
+==============================================================================================================
+Category: transistor
+==============================================================================================================
+
+  Threshold selection (VALIDATION SET):
+    best multiplier = 1.50
+    threshold = 11.006389
+    validation accuracy = 0.7571
+    validation precision = 0.7619
+    validation recall = 0.5714
+    validation F1 = 0.6531
+
+  FINAL anomaly detection (UNTOUCHED TEST SET):
+    accuracy = 0.8000
+    precision = 0.8750
+    recall = 0.5833
+    F1 = 0.7000
+    TP=7 TN=17 FP=1 FN=5
+    final good images = 18
+    final defective images = 12
+
+  FINAL defect classification (SUPPORT → QUERY):
+    accuracy = 0.4000
+    macro F1 = 0.3069
+    correct = 12/30
+
+    Support images:
+      bent_lead                 7
+      cut_lead                  7
+      damaged_case              7
+      good                      42
+      misplaced                 7
+
+    Query images:
+      bent_lead                 3
+      cut_lead                  3
+      damaged_case              3
+      good                      18
+      misplaced                 3
+
+==============================================================================================================
+Category: wood
+==============================================================================================================
+
+  Threshold selection (VALIDATION SET):
+    best multiplier = 1.50
+    threshold = 7.270902
+    validation accuracy = 0.8302
+    validation precision = 0.9697
+    validation recall = 0.8000
+    validation F1 = 0.8767
+
+  FINAL anomaly detection (UNTOUCHED TEST SET):
+    accuracy = 0.8846
+    precision = 0.9474
+    recall = 0.9000
+    F1 = 0.9231
+    TP=18 TN=5 FP=1 FN=2
+    final good images = 6
+    final defective images = 20
+
+  FINAL defect classification (SUPPORT → QUERY):
+    accuracy = 0.6923
+    macro F1 = 0.6984
+    correct = 18/26
+
+    Support images:
+      color                     5
+      combined                  7
+      good                      13
+      hole                      7
+      liquid                    7
+      scratch                   14
+
+    Query images:
+      color                     3
+      combined                  4
+      good                      6
+      hole                      3
+      liquid                    3
+      scratch                   7
+
+==============================================================================================================
+Category: zipper
+==============================================================================================================
+
+  Threshold selection (VALIDATION SET):
+    best multiplier = 1.50
+    threshold = 7.286750
+    validation accuracy = 0.5490
+    validation precision = 0.9722
+    validation recall = 0.4375
+    validation F1 = 0.6034
+
+  FINAL anomaly detection (UNTOUCHED TEST SET):
+    accuracy = 0.7143
+    precision = 0.9630
+    recall = 0.6667
+    F1 = 0.7879
+    TP=26 TN=9 FP=1 FN=13
+    final good images = 10
+    final defective images = 39
+
+  FINAL defect classification (SUPPORT → QUERY):
+    accuracy = 0.4898
+    macro F1 = 0.4202
+    correct = 24/49
+
+    Support images:
+      broken_teeth              13
+      combined                  11
+      fabric_border             11
+      fabric_interior           11
+      good                      22
+      rough                     11
+      split_teeth               12
+      squeezed_teeth            11
+
+    Query images:
+      broken_teeth              6
+      combined                  5
+      fabric_border             6
+      fabric_interior           5
+      good                      10
+      rough                     6
+      split_teeth               6
+      squeezed_teeth            5
+
+
+==============================================================================================================
+FINAL HOLD-OUT SUMMARY
+==============================================================================================================
+category         mult | anom_acc anom_prec anom_rec  anom_f1 |  cls_acc   cls_f1
+--------------------------------------------------------------------------------------------------------------
+bottle           1.50 |   0.8846    0.9474   0.9000   0.9231 |   0.7308   0.7265
+cable            1.50 |   0.5833    0.8125   0.4333   0.5652 |   0.5417   0.5157
+capsule          1.50 |   0.4390    0.9231   0.3529   0.5106 |   0.2683   0.2530
+carpet           1.50 |   0.5641    0.7600   0.6333   0.6909 |   0.3846   0.4035
+grid             1.75 |   0.2963    1.0000   0.0500   0.0952 |   0.2222   0.1829
+hazelnut         1.50 |   0.6667    1.0000   0.5000   0.6667 |   0.6944   0.6918
+leather          2.50 |   0.8750    0.8788   0.9667   0.9206 |   0.7000   0.6817
+metal_nut        1.50 |   0.5833    1.0000   0.4828   0.6512 |   0.5833   0.5850
+pill             1.50 |   0.3333    1.0000   0.2174   0.3571 |   0.2222   0.2748
+screw            1.50 |   0.3333    0.8333   0.1316   0.2273 |   0.1961   0.1734
+tile             1.50 |   0.8947    0.9286   0.9286   0.9286 |   0.8158   0.8180
+toothbrush       1.50 |   0.3846    1.0000   0.1111   0.2000 |   0.6154   0.5752
+transistor       1.50 |   0.8000    0.8750   0.5833   0.7000 |   0.4000   0.3069
+wood             1.50 |   0.8846    0.9474   0.9000   0.9231 |   0.6923   0.6984
+zipper           1.50 |   0.7143    0.9630   0.6667   0.7879 |   0.4898   0.4202
+--------------------------------------------------------------------------------------------------------------
+MACRO AVG             |   0.6158    0.9246   0.5238   0.6098 |   0.5038   0.4871
+
+==============================================================================================================
+Evaluation completed.
+==============================================================================================================
+
+IMPORTANT:
+• Thresholds were selected using validation data.
+• Final anomaly metrics were calculated on a separate test split.
+• Classification prototypes were built using support images only.
+• Classification metrics were calculated using separate query images.
+• Random seed is fixed at 42 for reproducibility.
